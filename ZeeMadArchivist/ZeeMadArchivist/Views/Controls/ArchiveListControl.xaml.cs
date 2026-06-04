@@ -91,7 +91,7 @@ public sealed partial class ArchiveListControl : UserControl
 
         var result = ViewModel.TryAddFolderPath(candidatePath);
 
-        if (App.MainWindowInstance is not CyberFeedForward.TheMadArchivist.MainWindow mainWindow)
+        if (App.MainWindowInstance is not MainWindow mainWindow)
         {
             return;
         }
@@ -147,7 +147,7 @@ public sealed partial class ArchiveListControl : UserControl
         var candidatePath = folder.Path;
         var result = ViewModel.TryAddFolderPath(candidatePath, clearNewArchivePathOnSuccess: false);
 
-        if (App.MainWindowInstance is not CyberFeedForward.TheMadArchivist.MainWindow mainWindow)
+        if (App.MainWindowInstance is not MainWindow mainWindow)
         {
             return;
         }
@@ -206,7 +206,7 @@ public sealed partial class ArchiveListControl : UserControl
             return;
         }
 
-        if (App.MainWindowInstance is CyberFeedForward.TheMadArchivist.MainWindow mainWindow)
+        if (App.MainWindowInstance is MainWindow mainWindow)
         {
             mainWindow.SetStatusText("Folder Deleted");
         }
@@ -249,20 +249,25 @@ public sealed partial class ArchiveListControl : UserControl
             var mapResult = FolderTools.MapDrive(folderPath, driveLetter.Value, archiveName);
             if (mapResult != 0)
             {
-                throw new InvalidOperationException($"Failed to map drive. Win32 error: {mapResult}.");
+                throw FolderTools.CreateMapDriveException(mapResult, driveLetter.Value, folderPath);
+            }
+
+            if (!FolderTools.TrySetDefaultAppDriveIcon(driveLetter.Value, out var driveIconError))
+            {
+                throw new InvalidOperationException($"Failed to set mapped drive icon. {driveIconError}");
             }
 
             var addResult = ViewModel.TryAddFolderPath(folderPath, clearNewArchivePathOnSuccess: false);
             if (addResult != ArchiveListControlViewModel.ArchiveAddResult.Added)
             {
-                if (App.MainWindowInstance is CyberFeedForward.TheMadArchivist.MainWindow mainWindow)
+                if (App.MainWindowInstance is MainWindow mainWindow)
                 {
                     mainWindow.SetStatusText($"Archive not added: {folderPath}");
                 }
             }
             else
             {
-                if (App.MainWindowInstance is CyberFeedForward.TheMadArchivist.MainWindow mainWindow)
+                if (App.MainWindowInstance is MainWindow mainWindow)
                 {
                     mainWindow.SetStatusText("New Archive Created");
                 }

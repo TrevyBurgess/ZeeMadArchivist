@@ -1,8 +1,10 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using Microsoft.Win32;
 
 #nullable enable
 
@@ -304,6 +306,95 @@ namespace CyberFeedForward.TheMadArchivist.AppTools.FileSystem
             }
         }
 
+        public static string? GetDefaultAppIconPath()
+        {
+            var baseDirectory = AppContext.BaseDirectory;
+            if (string.IsNullOrWhiteSpace(baseDirectory))
+            {
+                return null;
+            }
+
+            var candidate = Path.Combine(baseDirectory, "Assets", "AppIcon.ico");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            candidate = Path.Combine(baseDirectory, "AppX", "Assets", "AppIcon.ico");
+            if (File.Exists(candidate))
+            {
+                return candidate;
+            }
+
+            return null;
+        }
+
+        public static bool TrySetDriveIcon(char driveLetter, string iconFilePath, out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            var normalizedLetter = char.ToUpperInvariant(driveLetter);
+            if (normalizedLetter is < 'A' or > 'Z')
+            {
+                errorMessage = "Drive letter is invalid.";
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(iconFilePath))
+            {
+                errorMessage = "Icon file path cannot be empty.";
+                return false;
+            }
+
+            string fullIconPath;
+            try
+            {
+                fullIconPath = Path.GetFullPath(iconFilePath);
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+                return false;
+            }
+
+            if (!File.Exists(fullIconPath))
+            {
+                errorMessage = "Icon file does not exist.";
+                return false;
+            }
+
+            try
+            {
+                using var key = Registry.CurrentUser.CreateSubKey($@"Software\Classes\Applications\Explorer.exe\Drives\{normalizedLetter}\DefaultIcon");
+                if (key is null)
+                {
+                    errorMessage = "Unable to open drive icon registry key.";
+                    return false;
+                }
+
+                key.SetValue(string.Empty, $"{fullIconPath},0", RegistryValueKind.String);
+                SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, null, null);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                errorMessage = ex.Message;
+                return false;
+            }
+        }
+
+        public static bool TrySetDefaultAppDriveIcon(char driveLetter, out string errorMessage)
+        {
+            var iconPath = GetDefaultAppIconPath();
+            if (string.IsNullOrWhiteSpace(iconPath))
+            {
+                errorMessage = "AppIcon.ico was not found.";
+                return false;
+            }
+
+            return TrySetDriveIcon(driveLetter, iconPath, out errorMessage);
+        }
+
         public static int MapDrive(string folderPath, char driveLetter, string name)
         {
             if (string.IsNullOrWhiteSpace(folderPath))
@@ -336,6 +427,29 @@ namespace CyberFeedForward.TheMadArchivist.AppTools.FileSystem
             return WNetAddConnection2(ref nr, null, null, ConnectUpdateProfile);
         }
 
+        public static string GetMapDriveErrorMessage(int errorCode, char driveLetter, string folderPath)
+        {
+            var normalizedLetter = char.ToUpperInvariant(driveLetter);
+            var driveName = normalizedLetter is >= 'A' and <= 'Z' ? normalizedLetter + ":" : "the selected drive";
+            var targetPath = string.IsNullOrWhiteSpace(folderPath) ? "the selected folder" : folderPath.Trim();
+
+            return errorCode switch
+            {
+                Win32ErrorAlreadyAssigned => $"{driveName} is already in use. Choose a different drive letter and try again.",
+                Win32ErrorBadNetName => $"Windows could not find or access {targetPath}. Check that the folder exists and try again.",
+                Win32ErrorAccessDenied => $"Windows denied access while mapping {targetPath}. Check folder permissions and try again.",
+                Win32ErrorInvalidParameter => "The selected folder or drive letter is invalid. Check your selection and try again.",
+                _ => $"Windows could not map {targetPath} to {driveName}. Try a different drive letter or folder, then try again.",
+            };
+        }
+
+        public static Exception CreateMapDriveException(int errorCode, char driveLetter, string folderPath)
+        {
+            return new InvalidOperationException(
+                GetMapDriveErrorMessage(errorCode, driveLetter, folderPath),
+                new Win32Exception(errorCode));
+        }
+
         public static bool UnmapDrive(char driveLetter)
         {
             var normalizedLetter = char.ToUpperInvariant(driveLetter);
@@ -351,6 +465,9 @@ namespace CyberFeedForward.TheMadArchivist.AppTools.FileSystem
         }
 
         private const int Win32ErrorInvalidParameter = 87;
+        private const int Win32ErrorAccessDenied = 5;
+        private const int Win32ErrorAlreadyAssigned = 85;
+        private const int Win32ErrorBadNetName = 67;
         private const int ResourceTypeDisk = 0x00000001;
         private const int ConnectUpdateProfile = 0x00000001;
         private const int CancelUpdateProfile = 0x00000001;
@@ -375,6 +492,8 @@ namespace CyberFeedForward.TheMadArchivist.AppTools.FileSystem
         private static extern int WNetCancelConnection2(string lpName, int dwFlags, bool fForce);
 
         private const uint SHCNE_UPDATEITEM = 0x00002000;
+        private const uint SHCNE_ASSOCCHANGED = 0x08000000;
+        private const uint SHCNF_IDLIST = 0x0000;
         private const uint SHCNF_PATHW = 0x0005;
 
         [DllImport("shell32.dll", CharSet = CharSet.Unicode)]

@@ -17,10 +17,24 @@
         </Grid.RowDefinitions>
 
         <StackPanel x:Name="NewArchiveDialogFieldsPanel" Spacing="8">
-            <TextBox
-                x:Name="FolderPathTextBox"
-                Header="Folder path"
-                PlaceholderText="C:\\Archives\\MyArchive" />
+            <Grid x:Name="FolderPathSelectionGrid" ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox
+                    x:Name="FolderPathTextBox"
+                    Header="Folder path"
+                    PlaceholderText="C:\\Archives\\MyArchive" />
+
+                <Button
+                    x:Name="BrowseFolderButton"
+                    Grid.Column="1"
+                    VerticalAlignment="Bottom"
+                    Click="BrowseFolderButton_OnClick"
+                    Content="Browse" />
+            </Grid>
 
             <ComboBox
                 x:Name="DriveLetterComboBox"

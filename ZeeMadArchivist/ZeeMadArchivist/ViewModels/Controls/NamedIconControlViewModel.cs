@@ -187,6 +187,13 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         Cancel = 2,
     }
 
+    public enum CustomIconsFolderSaveResult
+    {
+        Saved = 0,
+        DestinationExists = 1,
+        Failed = 2,
+    }
+
     public sealed class ImportIconsResult
     {
         public int ImportedCount { get; internal set; }
@@ -313,19 +320,83 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(IsCustomIconsPathSaveEnabled));
     }
 
-    public void SaveCustomIconsFolderPath()
+    public CustomIconsFolderSaveResult SaveCustomIconsFolderPath(bool mergeIfDestinationExists = false)
     {
         var normalized = NormalizeCustomIconsFolderPath(CustomIconsFolderPath);
+        var previous = NormalizeCustomIconsFolderPath(_savedCustomIconsFolderPath);
+
+        try
+        {
+            if (!string.Equals(previous, normalized, StringComparison.OrdinalIgnoreCase) &&
+                !string.IsNullOrWhiteSpace(previous) &&
+                _directoryExists(previous))
+            {
+                if (_directoryExists(normalized))
+                {
+                    if (!mergeIfDestinationExists)
+                    {
+                        return CustomIconsFolderSaveResult.DestinationExists;
+                    }
+
+                    MergeDirectoryContents(previous, normalized);
+                    Directory.Delete(previous, recursive: true);
+                }
+                else
+                {
+                    var parent = Path.GetDirectoryName(normalized);
+                    if (!string.IsNullOrWhiteSpace(parent))
+                    {
+                        _createDirectory(parent);
+                    }
+
+                    Directory.Move(previous, normalized);
+                }
+            }
+            else
+            {
+                EnsureCustomIconsFolderExists(normalized);
+            }
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+            return CustomIconsFolderSaveResult.Failed;
+        }
+
         _savedCustomIconsFolderPath = normalized;
         _customIconsFolderPath = normalized;
 
         _customIconsSettingsService.SetCustomIconsFolderPath(_savedCustomIconsFolderPath);
-        EnsureCustomIconsFolderExists(_savedCustomIconsFolderPath);
         RefreshIconList();
         ResetCustomIconsFolderWatcher();
 
         OnPropertyChanged(nameof(CustomIconsFolderPath));
         OnPropertyChanged(nameof(IsCustomIconsPathSaveEnabled));
+        return CustomIconsFolderSaveResult.Saved;
+    }
+
+    private static void MergeDirectoryContents(string sourceFolderPath, string destinationFolderPath)
+    {
+        Directory.CreateDirectory(destinationFolderPath);
+
+        foreach (var sourceDirectory in Directory.EnumerateDirectories(sourceFolderPath, "*", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(sourceFolderPath, sourceDirectory);
+            Directory.CreateDirectory(Path.Combine(destinationFolderPath, relativePath));
+        }
+
+        foreach (var sourceFile in Directory.EnumerateFiles(sourceFolderPath, "*", SearchOption.AllDirectories))
+        {
+            var relativePath = Path.GetRelativePath(sourceFolderPath, sourceFile);
+            var destinationFile = Path.Combine(destinationFolderPath, relativePath);
+            var destinationDirectory = Path.GetDirectoryName(destinationFile);
+            if (!string.IsNullOrWhiteSpace(destinationDirectory))
+            {
+                Directory.CreateDirectory(destinationDirectory);
+            }
+
+            File.Move(sourceFile, destinationFile, overwrite: true);
+        }
     }
 
     private void ResetCustomIconsFolderWatcher()
@@ -523,8 +594,6 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         {
             return;
         }
-
-        EnsureCustomIconsFolderExists(folder);
 
         try
         {
