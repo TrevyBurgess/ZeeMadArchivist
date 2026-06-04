@@ -26,8 +26,6 @@
             Text="Any folder with that name will automatically get a custom icon listed below."
             Style="{ThemeResource BodyTextBlockStyle}"
             Margin="0,-10,0,12" />
-                
-        
 
         <StackPanel x:Name="CustomIconPanel" Orientation="Horizontal">
             <Button
@@ -158,7 +156,7 @@
             Content="Load Default Icons"
             HorizontalAlignment="Left"
             Click="LoadDefaultIconsButton_OnClick" />
-            <TextBlock Margin="10,0,0,0" Text="Note: Might override existing icons" VerticalAlignment="Center" />
+            <TextBlock Margin="10,0,0,0" Text="Note: Will override existing icons" VerticalAlignment="Center" />
         </StackPanel>
     </StackPanel>
 </UserControl>

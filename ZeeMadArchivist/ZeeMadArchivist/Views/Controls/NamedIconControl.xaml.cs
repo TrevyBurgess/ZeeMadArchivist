@@ -70,9 +70,54 @@ public sealed partial class NamedIconControl : UserControl
         ViewModel.CustomIconsFolderPath = folder.Path;
     }
 
-    private void CustomIconsSaveButton_OnClick(object sender, RoutedEventArgs e)
+    private async void CustomIconsSaveButton_OnClick(object sender, RoutedEventArgs e)
     {
-        ViewModel?.SaveCustomIconsFolderPath();
+        if (ViewModel is null)
+        {
+            return;
+        }
+
+        var result = ViewModel.SaveCustomIconsFolderPath();
+        if (result == NamedIconControlViewModel.CustomIconsFolderSaveResult.Saved)
+        {
+            return;
+        }
+
+        if (result == NamedIconControlViewModel.CustomIconsFolderSaveResult.DestinationExists)
+        {
+            var mergeDialog = new ContentDialog
+            {
+                Title = "Custom Icons Folder Exists",
+                Content = "The selected custom icons folder already exists. Do you want to merge the current custom icons into it?",
+                PrimaryButtonText = "Merge",
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = XamlRoot,
+            };
+
+            var mergeResult = await mergeDialog.ShowAsync();
+            if (mergeResult != ContentDialogResult.Primary)
+            {
+                return;
+            }
+
+            result = ViewModel.SaveCustomIconsFolderPath(mergeIfDestinationExists: true);
+            if (result == NamedIconControlViewModel.CustomIconsFolderSaveResult.Saved)
+            {
+                return;
+            }
+        }
+
+        var errorDialog = new ContentDialog
+        {
+            Title = "Save Custom Icons Folder Failed",
+            Content = "The custom icons folder could not be saved. Check that the folder is accessible and try again.",
+            CloseButtonText = "OK",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = XamlRoot,
+        };
+
+        await errorDialog.ShowAsync();
     }
 
     private void LoadDefaultIconsButton_OnClick(object sender, RoutedEventArgs e)
@@ -123,8 +168,10 @@ public sealed partial class NamedIconControl : UserControl
             return;
         }
 
-        var picker = new FileOpenPicker();
-        picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+        var picker = new FileOpenPicker
+        {
+            SuggestedStartLocation = PickerLocationId.PicturesLibrary
+        };
         picker.FileTypeFilter.Add(".png");
         picker.FileTypeFilter.Add(".jpg");
         picker.FileTypeFilter.Add(".jpeg");

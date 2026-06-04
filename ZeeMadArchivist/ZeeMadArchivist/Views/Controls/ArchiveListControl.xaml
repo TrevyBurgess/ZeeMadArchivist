@@ -18,11 +18,16 @@
                 x:Name="NewArchiveButton"
                 Grid.Column="2"
                 ToolTipService.ToolTip="Create New Archive"
-                Content="New Archive"
-                Click="NewArchiveButton_OnClick" />
+                Click="NewArchiveButton_OnClick" >
+            <StackPanel Orientation="Horizontal">
+                <SymbolIcon Symbol="Folder" />
+                <TextBlock Text="New Archive"  Padding="10,0,0,0" />
+            </StackPanel>
+        </Button>
 
         <Grid
             x:Name="ArchivesInputGrid"
+            Visibility="Collapsed"
             ColumnSpacing="8">
 
             <Grid.ColumnDefinitions>
@@ -37,7 +42,8 @@
                 PlaceholderText="Add archive path..."
                 KeyDown="NewArchivePathTextBox_OnKeyDown"
                 LostFocus="NewArchivePathTextBox_OnLostFocus"
-                Text="{Binding ElementName=ControlRoot, Path=ViewModel.NewArchivePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                Text="{Binding ElementName=ControlRoot, Path=ViewModel.NewArchivePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            />
             <Button
                 x:Name="BrowseArchiveButton"
                 Grid.Column="3"

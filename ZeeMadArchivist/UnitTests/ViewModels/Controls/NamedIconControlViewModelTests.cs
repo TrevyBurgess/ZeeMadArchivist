@@ -195,9 +195,118 @@ public sealed class NamedIconControlViewModelTests
 
         vm.SaveCustomIconsFolderPath();
 
-        Assert.AreEqual(3, created);
+        Assert.AreEqual(1, created);
         Assert.AreEqual("C:\\Temp\\CustomIcons", settings.GetCustomIconsFolderPath());
         Assert.IsFalse(vm.IsCustomIconsPathSaveEnabled);
+    }
+
+    [TestMethod]
+    public void SaveCustomIconsFolderPath_WhenSavedFolderExistsAndDestinationMissing_RenamesFolder()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "NamedIconControlTests", Guid.NewGuid().ToString("N"));
+        var source = Path.Combine(root, "CustomIcons");
+        var destination = Path.Combine(root, "RenamedCustomIcons");
+        Directory.CreateDirectory(source);
+        File.WriteAllText(Path.Combine(source, "alpha.ico"), "alpha");
+
+        try
+        {
+            var store = new FakeAppSettingsStore();
+            var settings = new CustomIconsSettingsService(store);
+            settings.SetCustomIconsFolderPath(source);
+
+            var vm = new NamedIconControlViewModel(customIconsSettingsService: settings);
+            vm.LoadFromProgramData();
+            vm.CustomIconsFolderPath = destination;
+
+            var result = vm.SaveCustomIconsFolderPath();
+
+            Assert.AreEqual(NamedIconControlViewModel.CustomIconsFolderSaveResult.Saved, result);
+            Assert.IsFalse(Directory.Exists(source));
+            Assert.IsTrue(File.Exists(Path.Combine(destination, "alpha.ico")));
+            Assert.AreEqual(destination, settings.GetCustomIconsFolderPath());
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
+    public void SaveCustomIconsFolderPath_WhenDestinationExistsWithoutMerge_ReturnsDestinationExists()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "NamedIconControlTests", Guid.NewGuid().ToString("N"));
+        var source = Path.Combine(root, "CustomIcons");
+        var destination = Path.Combine(root, "ExistingCustomIcons");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(destination);
+        File.WriteAllText(Path.Combine(source, "alpha.ico"), "alpha");
+
+        try
+        {
+            var store = new FakeAppSettingsStore();
+            var settings = new CustomIconsSettingsService(store);
+            settings.SetCustomIconsFolderPath(source);
+
+            var vm = new NamedIconControlViewModel(customIconsSettingsService: settings);
+            vm.LoadFromProgramData();
+            vm.CustomIconsFolderPath = destination;
+
+            var result = vm.SaveCustomIconsFolderPath();
+
+            Assert.AreEqual(NamedIconControlViewModel.CustomIconsFolderSaveResult.DestinationExists, result);
+            Assert.IsTrue(File.Exists(Path.Combine(source, "alpha.ico")));
+            Assert.AreEqual(source, settings.GetCustomIconsFolderPath());
+            Assert.IsTrue(vm.IsCustomIconsPathSaveEnabled);
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
+    }
+
+    [TestMethod]
+    public void SaveCustomIconsFolderPath_WhenDestinationExistsWithMerge_MergesAndDeletesSource()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "NamedIconControlTests", Guid.NewGuid().ToString("N"));
+        var source = Path.Combine(root, "CustomIcons");
+        var destination = Path.Combine(root, "ExistingCustomIcons");
+        Directory.CreateDirectory(source);
+        Directory.CreateDirectory(destination);
+        File.WriteAllText(Path.Combine(source, "alpha.ico"), "alpha");
+        File.WriteAllText(Path.Combine(destination, "beta.ico"), "beta");
+
+        try
+        {
+            var store = new FakeAppSettingsStore();
+            var settings = new CustomIconsSettingsService(store);
+            settings.SetCustomIconsFolderPath(source);
+
+            var vm = new NamedIconControlViewModel(customIconsSettingsService: settings);
+            vm.LoadFromProgramData();
+            vm.CustomIconsFolderPath = destination;
+
+            var result = vm.SaveCustomIconsFolderPath(mergeIfDestinationExists: true);
+
+            Assert.AreEqual(NamedIconControlViewModel.CustomIconsFolderSaveResult.Saved, result);
+            Assert.IsFalse(Directory.Exists(source));
+            Assert.IsTrue(File.Exists(Path.Combine(destination, "alpha.ico")));
+            Assert.IsTrue(File.Exists(Path.Combine(destination, "beta.ico")));
+            Assert.AreEqual(destination, settings.GetCustomIconsFolderPath());
+        }
+        finally
+        {
+            if (Directory.Exists(root))
+            {
+                Directory.Delete(root, recursive: true);
+            }
+        }
     }
 
     [TestMethod]
@@ -391,7 +500,7 @@ public sealed class NamedIconControlViewModelTests
     }
 
     [TestMethod]
-    public void SettingCustomIconsFolderPath_WhenDirectoryMissing_CreatesDirectory()
+    public void SettingCustomIconsFolderPath_WhenDirectoryMissing_DoesNotCreateDirectory()
     {
         var store = new FakeAppSettingsStore();
         var settings = new CustomIconsSettingsService(store);
@@ -406,11 +515,11 @@ public sealed class NamedIconControlViewModelTests
 
         vm.CustomIconsFolderPath = "C:\\Icons";
 
-        Assert.AreEqual(1, created);
+        Assert.AreEqual(0, created);
     }
 
     [TestMethod]
-    public void RefreshIcons_WhenDirectoryMissing_CreatesDirectory()
+    public void RefreshIcons_WhenDirectoryMissing_DoesNotCreateDirectory()
     {
         var store = new FakeAppSettingsStore();
         var settings = new CustomIconsSettingsService(store);
@@ -426,11 +535,11 @@ public sealed class NamedIconControlViewModelTests
             CustomIconsFolderPath = "C:\\Icons"
         };
 
-        Assert.AreEqual(1, created);
+        Assert.AreEqual(0, created);
 
         vm.RefreshIcons();
 
-        Assert.AreEqual(2, created);
+        Assert.AreEqual(0, created);
     }
 
     [TestMethod]

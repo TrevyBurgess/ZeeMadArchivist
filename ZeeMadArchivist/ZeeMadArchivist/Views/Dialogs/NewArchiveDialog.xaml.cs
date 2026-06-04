@@ -4,6 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Windows.Storage;
+using Windows.Storage.Pickers;
+using WinRT.Interop;
 
 namespace CyberFeedForward.TheMadArchivist.Views.Dialogs;
 
@@ -31,6 +34,39 @@ public sealed partial class NewArchiveDialog : ContentDialog
     }
 
     public string FolderPath => FolderPathTextBox.Text?.Trim() ?? string.Empty;
+
+    private async void BrowseFolderButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var picker = new FolderPicker();
+        picker.FileTypeFilter.Add("*");
+
+        if (App.MainWindowInstance is null)
+        {
+            return;
+        }
+
+        var hwnd = WindowNative.GetWindowHandle(App.MainWindowInstance);
+        InitializeWithWindow.Initialize(picker, hwnd);
+
+        StorageFolder? folder;
+        try
+        {
+            folder = await picker.PickSingleFolderAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Trace.TraceError(ex.ToString());
+            return;
+        }
+
+        if (folder is null)
+        {
+            return;
+        }
+
+        FolderPathTextBox.Text = folder.Path;
+        HideError();
+    }
 
     public char? SelectedDriveLetter
     {

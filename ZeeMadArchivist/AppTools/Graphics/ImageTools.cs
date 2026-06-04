@@ -1,5 +1,3 @@
-using Aspose.Imaging;
-using Aspose.Imaging.ImageOptions;
 using System;
 using System.Drawing;
 using System.IO;
@@ -26,6 +24,8 @@ public static partial class ImageTools
 
         try
         {
+            
+
             using var tempIcon = Icon.FromHandle(hIcon);
             return (Icon)tempIcon.Clone();
         }

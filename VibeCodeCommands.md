@@ -3,11 +3,11 @@
 
 Here are some the vibe code commands I used.
 
-# General
+# 1. General
 
 - Update the title to show app title and page in the form "App name - Page name"
 
-# Layout
+# 2. Layout
 
 - Add Home page
 - Add a MenuBar at the top of the app
@@ -17,9 +17,9 @@ Here are some the vibe code commands I used.
 - Add back and forward Navigation buttons to the command bar, to navigate to visited pages
 - Remember the last position and size of the app when it closes
 
-# Pages
+# 3. Pages
 
-## Page - Settings
+## 3.1. Settings
 
 - Add a page called Settings. Navigate to this page when a user clicks on Settings button
 - Add a toggle to Settings. When on, this will activate dark mode
@@ -30,14 +30,14 @@ Here are some the vibe code commands I used.
 - Remove the 'Add new tabs' button and 'Close Tab' buttons from SettingsGroups
 - Add NamedIconControl to IconsSettingsTab
 
-### Page - Settings - General
+### 3.2.1. Settings - General
 
 - Add a toggle to GeneralSettingsControl called SetStartup. If input parameter is true, app will start on system reboot. Set default to true.
 - When a user tries to close the app, check if SetStartupToggleSwitch is set to true. If true, close window and let app run in the background. The first time, warn user app is running in the background. If false, close app
 - Add Open menu item to tray app menu. If app is closed, open it. If minimize, unminimize it
 - Remember state of SetStartupToggleSwitch when app closes
 
-### Page - Settings - Archives (ArchiveListControl)
+### 3.3.2. Settings - Archives (ArchiveListControl)
 
 - Add a list control in SettingsPage called ArchiveListControl. This control will display a list of file paths. This list will be remembered between sessions.
 - Create a User control called ArchiveListControl. Include viewmodel. Add it to the settings panel.
@@ -55,9 +55,18 @@ Here are some the vibe code commands I used.
 - Disable AddArchiveButton when folder path is empty
 - Do not show path in NewArchivePathTextBox when a folder is selected with the folder selector dialog
 
+# On Startup
+
+On Install, 
+
+#### 3.3.2.1. Dialog - NewArchiveDialog
+
 - Add a Button to ArchiveListControl called 'New Archive'. When clicked, will open a dialog called NewArchiveDialog. This dialog will contain a field for a folder path, a dropdown containing a list of unused drive letters, and a save and cancel button.
 - Enable NewArchiveButton only when there is at least 1 unused drive letters
-
+- Add a folder selection dialog button to NewArchiveDialog. Fill in FolderPathTextBox with returned path.
+- When Save on NewArchiveDialog is clicked, map the returned folder as a drive with the specified drive letter. Add AppIcon.ico as the drive icon
+- Show user friendly error when drive mapping fails
+- Make sure all required capabilities and declarations are set.
 
 ### Page - Settings - Icons (NamedIconControl)
 
