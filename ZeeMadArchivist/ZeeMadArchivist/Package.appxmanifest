@@ -18,7 +18,7 @@
   <Properties>
     <DisplayName>Zee Mad Archivist</DisplayName>
     <PublisherDisplayName>CyberFeedForward</PublisherDisplayName>
-    <Logo>Assets\PackageLogo.scale-100.png</Logo>
+    <Logo>Assets/AppIcons/AppIcon.png</Logo>
   </Properties>
 
   <Dependencies>
@@ -37,16 +37,16 @@
       <uap:VisualElements
         DisplayName="Zee Mad Archivist"
         Description="An application for managing your archived documents on Windows"
-        BackgroundColor="transparent"
-        Square150x150Logo="Assets\MediumTitle.scale-100.png"
-        Square44x44Logo="Assets\AppIcon.scale-100.png">
-        <uap:DefaultTile Wide310x150Logo="Assets\WideTitle.scale-100.png"  ShortName="Archivist" Square71x71Logo="Assets\SmallTile.scale-100.png" Square310x310Logo="Assets\LargeTile.scale-100.png">
+        BackgroundColor="transparent" Square150x150Logo="Assets/AppIcons/AppIcon.png" Square44x44Logo="Assets/AppIcons/AppIcon.png">
+        <uap:DefaultTile ShortName="Archivist"  Square71x71Logo="Assets/AppIcons/AppIcon.png" Wide310x150Logo="Assets/AppIcons/AppIcon.png" Square310x310Logo="Assets/AppIcons/AppIcon.png">
           <uap:ShowNameOnTiles>
             <uap:ShowOn Tile="square150x150Logo"/>
+            <uap:ShowOn Tile="wide310x150Logo"/>
+            <uap:ShowOn Tile="square310x310Logo"/>
           </uap:ShowNameOnTiles>
         </uap:DefaultTile >
-        <uap:SplashScreen Image="Assets\SplashScreen.scale-100.png" />
-        <uap:LockScreen BadgeLogo="Assets\BadgeLogo.scale-100.png" Notification="badgeAndTileText"/>
+        <uap:LockScreen Notification="badgeAndTileText" BadgeLogo="Assets/AppIcons/AppIcon.png"/>
+        <uap:SplashScreen Image="Assets/AppIcons/AppIcon.png"/>
       </uap:VisualElements>
     </Application>
   </Applications>
