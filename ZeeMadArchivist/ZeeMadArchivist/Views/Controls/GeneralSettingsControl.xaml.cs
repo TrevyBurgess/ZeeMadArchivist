@@ -1,3 +1,4 @@
+using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.ViewModels.Pages;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -42,6 +43,30 @@ public sealed partial class GeneralSettingsControl : UserControl
             {
                 Title = "Startup Setting Failed",
                 Content = string.IsNullOrWhiteSpace(errorMessage) ? "Unable to update startup setting." : errorMessage,
+                CloseButtonText = "OK",
+                XamlRoot = XamlRoot,
+            };
+
+            await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+            throw;
+        }
+    }
+
+    private async void ShowFirstRunCustomizationButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var service = new FirstRunService(new LocalAppSettingsStore());
+            service.ResetFirstRunExperience();
+
+            var dialog = new ContentDialog
+            {
+                Title = "Customization Dialog Enabled",
+                Content = "The customization dialog will open the next time the app starts.",
                 CloseButtonText = "OK",
                 XamlRoot = XamlRoot,
             };

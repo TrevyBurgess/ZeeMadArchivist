@@ -17,6 +17,7 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using CyberFeedForward.TheMadArchivist.Utilities;
 using CyberFeedForward.TheMadArchivist.Services;
+using CyberFeedForward.TheMadArchivist.Views.Dialogs;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -30,6 +31,7 @@ namespace CyberFeedForward.TheMadArchivist
     {
         private Window? _window;
         private TrayIconService? _trayIcon;
+        private FirstRunService? _firstRunService;
 
         public static Window? MainWindowInstance { get; private set; }
 
@@ -53,6 +55,7 @@ namespace CyberFeedForward.TheMadArchivist
 
             _trayIcon = new TrayIconService();
             _trayIcon.Initialize();
+            _firstRunService = new FirstRunService(new LocalAppSettingsStore());
 
             if (_window.Content is FrameworkElement rootElement)
             {
@@ -61,6 +64,62 @@ namespace CyberFeedForward.TheMadArchivist
             }
 
             _window.Activate();
+
+            _ = RunFirstRunExperienceAsync();
+        }
+
+        private async System.Threading.Tasks.Task RunFirstRunExperienceAsync()
+        {
+            if (_firstRunService is null || _window?.Content is not FrameworkElement rootElement)
+            {
+                return;
+            }
+
+            try
+            {
+                if (!_firstRunService.ShouldRunFirstRunExperience())
+                {
+                    return;
+                }
+
+                var xamlRoot = await GetXamlRootAsync(rootElement);
+                if (xamlRoot is null)
+                {
+                    return;
+                }
+
+                var dialog = new FirstRunCustomizationDialog
+                {
+                    XamlRoot = xamlRoot,
+                };
+
+                await dialog.ShowAsync();
+                _firstRunService.MarkFirstRunExperienceCompleted();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+            }
+        }
+
+        private static async System.Threading.Tasks.Task<XamlRoot?> GetXamlRootAsync(FrameworkElement rootElement)
+        {
+            if (rootElement.XamlRoot is not null)
+            {
+                return rootElement.XamlRoot;
+            }
+
+            var completionSource = new System.Threading.Tasks.TaskCompletionSource<XamlRoot?>();
+
+            void RootElement_Loaded(object sender, RoutedEventArgs e)
+            {
+                rootElement.Loaded -= RootElement_Loaded;
+                completionSource.TrySetResult(rootElement.XamlRoot);
+            }
+
+            rootElement.Loaded += RootElement_Loaded;
+            await completionSource.Task;
+            return rootElement.XamlRoot;
         }
     }
 }
