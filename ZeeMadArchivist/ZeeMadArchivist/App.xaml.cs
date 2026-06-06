@@ -1,22 +1,8 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+﻿using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.Utilities;
-using CyberFeedForward.TheMadArchivist.Services;
+using CyberFeedForward.TheMadArchivist.Views.Dialogs;
+using Microsoft.UI.Xaml;
+using System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -30,6 +16,7 @@ namespace CyberFeedForward.TheMadArchivist
     {
         private Window? _window;
         private TrayIconService? _trayIcon;
+        private FirstRunService? _firstRunService;
 
         public static Window? MainWindowInstance { get; private set; }
 
@@ -51,16 +38,74 @@ namespace CyberFeedForward.TheMadArchivist
             _window = new MainWindow();
             MainWindowInstance = _window;
 
-            _trayIcon = new TrayIconService();
-            _trayIcon.Initialize();
+            _firstRunService = FirstRunService.Instance;
 
             if (_window.Content is FrameworkElement rootElement)
             {
-                var themeSettings = new ThemeSettingsService(new LocalAppSettingsStore());
+                var themeSettings = new ThemeSettingsService(LocalAppSettingsStore.Instance);
                 AppThemeManager.ApplyThemeMode(rootElement, themeSettings.GetThemeMode());
             }
 
             _window.Activate();
+
+            _ = RunFirstRunExperienceAsync();
+
+            _trayIcon = new TrayIconService();
+            _trayIcon.Initialize();
+        }
+
+        private async System.Threading.Tasks.Task RunFirstRunExperienceAsync()
+        {
+            if (_firstRunService is null || _window?.Content is not FrameworkElement rootElement)
+            {
+                return;
+            }
+
+            try
+            {
+                if (!_firstRunService.ShouldRunFirstRunExperience())
+                {
+                    return;
+                }
+
+                var xamlRoot = await GetXamlRootAsync(rootElement);
+                if (xamlRoot is null)
+                {
+                    return;
+                }
+
+                var dialog = new FirstRunCustomizationDialog
+                {
+                    XamlRoot = xamlRoot,
+                };
+
+                await dialog.ShowAsync();
+                _firstRunService.MarkFirstRunExperienceCompleted();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError(ex.ToString());
+            }
+        }
+
+        private static async System.Threading.Tasks.Task<XamlRoot?> GetXamlRootAsync(FrameworkElement rootElement)
+        {
+            if (rootElement.XamlRoot is not null)
+            {
+                return rootElement.XamlRoot;
+            }
+
+            var completionSource = new System.Threading.Tasks.TaskCompletionSource<XamlRoot?>();
+
+            void RootElement_Loaded(object sender, RoutedEventArgs e)
+            {
+                rootElement.Loaded -= RootElement_Loaded;
+                completionSource.TrySetResult(rootElement.XamlRoot);
+            }
+
+            rootElement.Loaded += RootElement_Loaded;
+            await completionSource.Task;
+            return rootElement.XamlRoot;
         }
     }
 }

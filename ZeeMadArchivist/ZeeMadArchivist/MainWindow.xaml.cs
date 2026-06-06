@@ -1,15 +1,14 @@
+using CyberFeedForward.TheMadArchivist.Services;
+using CyberFeedForward.TheMadArchivist.Utilities;
+using CyberFeedForward.TheMadArchivist.ViewModels;
+using CyberFeedForward.TheMadArchivist.Views.Pages;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
 using System;
 using System.IO;
-using System.Runtime.InteropServices;
-using CyberFeedForward.TheMadArchivist.Views.Pages;
-using CyberFeedForward.TheMadArchivist.Services;
-using CyberFeedForward.TheMadArchivist.ViewModels;
-using CyberFeedForward.TheMadArchivist.Utilities;
 using WinRT.Interop;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -35,11 +34,11 @@ namespace CyberFeedForward.TheMadArchivist
         {
             InitializeComponent();
 
-            _commandBarSettings = new CommandBarSettingsService(new LocalAppSettingsStore());
+            _commandBarSettings = new CommandBarSettingsService(LocalAppSettingsStore.Instance);
             _startupSettingsService = new StartupSettingsService();
-            _backgroundCloseWarningService = new BackgroundCloseWarningService(new LocalAppSettingsStore());
+            _backgroundCloseWarningService = new BackgroundCloseWarningService(LocalAppSettingsStore.Instance);
             _viewModel = new MainWindowViewModel(_commandBarSettings, Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-            _windowPlacementSettings = new WindowPlacementSettingsService(new LocalAppSettingsStore());
+            _windowPlacementSettings = new WindowPlacementSettingsService(LocalAppSettingsStore.Instance);
 
             var hwnd = WindowNative.GetWindowHandle(this);
             var windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
@@ -99,7 +98,7 @@ namespace CyberFeedForward.TheMadArchivist
                 return;
             }
 
-            var shouldRunInBackground = false;
+            bool shouldRunInBackground;
             try
             {
                 shouldRunInBackground = _startupSettingsService.IsStartupEnabled();

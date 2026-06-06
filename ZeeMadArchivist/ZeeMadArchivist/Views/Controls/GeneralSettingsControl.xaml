@@ -34,5 +34,10 @@
             Header="Start on system reboot"
             Toggled="SetStartupToggleSwitch_OnToggled"
             IsOn="{Binding SetStartup, Mode=TwoWay}" />
+
+        <Button
+            x:Name="ShowFirstRunCustomizationButton"
+            Click="ShowFirstRunCustomizationButton_OnClick"
+            Content="Show customization dialog on next launch" />
     </StackPanel>
 </UserControl>

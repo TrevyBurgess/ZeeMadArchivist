@@ -105,7 +105,7 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
     {
         try
         {
-            return new CustomIconsSettingsService(new LocalAppSettingsStore());
+            return new CustomIconsSettingsService(LocalAppSettingsStore.Instance);
         }
         catch
         {
@@ -646,7 +646,7 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
 
     private void EnsureCustomIconsFolderExists(string folderPath)
     {
-        if (string.IsNullOrWhiteSpace(folderPath))
+        if (string.IsNullOrWhiteSpace(folderPath) || FirstRunService.Instance.ShouldRunFirstRunExperience())
         {
             return;
         }
