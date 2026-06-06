@@ -19,7 +19,7 @@ public sealed partial class ArchiveListControl : UserControl
     public ArchiveListControl()
     {
         InitializeComponent();
-        ViewModel = new ArchiveListControlViewModel(new ArchivesSettingsService(new LocalAppSettingsStore()));
+        ViewModel = new ArchiveListControlViewModel(new ArchivesSettingsService(LocalAppSettingsStore.Instance));
 
         Loaded += ArchiveListControl_OnLoaded;
     }

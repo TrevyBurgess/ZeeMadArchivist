@@ -1,14 +1,18 @@
 <ContentDialog
+    x:Name="MainContent"
     x:Class="CyberFeedForward.TheMadArchivist.Views.Dialogs.FirstRunCustomizationDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:viewmodels="using:CyberFeedForward.TheMadArchivist.ViewModels.Pages"
     mc:Ignorable="d"
-    Title="Customize ZeeMadArchivist"
-    PrimaryButtonText="Save"
-    CloseButtonText="Skip"
+    PrimaryButtonText="OK"
     DefaultButton="Primary">
+
+    <ContentDialog.Resources>
+        <viewmodels:SettingsPageViewModel x:Key="ViewModel" />
+    </ContentDialog.Resources>
 
     <StackPanel x:Name="FirstRunCustomizationPanel" Spacing="16">
         <TextBlock
@@ -16,16 +20,59 @@
             Text="Choose a few preferences before you start. You can change these later in Settings."
             TextWrapping="Wrap" />
 
+        <Grid x:Name="InitialArchivePathSelectionGrid" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="InitialArchivePathTextBox"
+                Header="Initial archive path"
+                PlaceholderText="C:\\Archives\\MyArchive" />
+
+            <Button
+                x:Name="BrowseInitialArchivePathButton"
+                Grid.Column="1"
+                VerticalAlignment="Bottom"
+                Click="BrowseInitialArchivePathButton_OnClick"
+                >
+                <SymbolIcon Symbol="NewFolder" />
+            </Button>
+        </Grid>
+
+        <Grid x:Name="InitialCustomIconsPathSelectionGrid" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="InitialCustomIconsPathTextBox"
+                Header="Initial custom icons path"
+                PlaceholderText="C:\\Archives\\CustomIcons" />
+
+            <Button
+                x:Name="BrowseInitialCustomIconsPathButton"
+                Grid.Column="1"
+                VerticalAlignment="Bottom"
+                Click="BrowseInitialCustomIconsPathButton_OnClick"
+                >
+                <SymbolIcon Symbol="NewFolder" />
+            </Button>
+        </Grid>
+
         <ComboBox
             x:Name="ThemeModeComboBox"
             Header="Theme"
-            SelectedIndex="0">
-            <ComboBoxItem x:Name="SystemThemeComboBoxItem" Content="Use system setting" />
-            <ComboBoxItem x:Name="LightThemeComboBoxItem" Content="Light" />
-            <ComboBoxItem x:Name="DarkThemeComboBoxItem" Content="Dark" />
+            SelectedIndex="{Binding ThemeModeIndex, Mode=TwoWay}">
+            <ComboBoxItem x:Name="ThemeModeSystemDefaultItem" Content="System default" />
+            <ComboBoxItem x:Name="ThemeModeLightItem" Content="Light" />
+            <ComboBoxItem x:Name="ThemeModeDarkItem" Content="Dark" />
         </ComboBox>
 
         <ToggleSwitch
+            Visibility="Collapsed"
             x:Name="CommandBarLocationToggleSwitch"
             Header="Navigation layout"
             OffContent="Command bar on the right"

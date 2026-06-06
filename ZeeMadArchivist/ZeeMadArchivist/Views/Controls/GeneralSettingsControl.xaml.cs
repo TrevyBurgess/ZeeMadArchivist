@@ -60,7 +60,7 @@ public sealed partial class GeneralSettingsControl : UserControl
     {
         try
         {
-            var service = new FirstRunService(new LocalAppSettingsStore());
+            var service = FirstRunService.Instance;
             service.ResetFirstRunExperience();
 
             var dialog = new ContentDialog

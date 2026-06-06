@@ -4,7 +4,6 @@ using Microsoft.UI.Xaml;
 using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
-using CyberFeedForward.TheMadArchivist;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Pages;
 
@@ -38,7 +37,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged
 
     private static IAppSettingsStore CreateDefaultSettingsStore()
     {
-        return new LocalAppSettingsStore();
+        return LocalAppSettingsStore.Instance;
     }
 
     public SettingsPageViewModel(
@@ -61,7 +60,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged
         _commandBarSettingsService = commandBarSettingsService;
         _startupSettingsService = startupSettingsService;
         _themeRootElement = themeRootElement;
-        _settingsStore = settingsStore ?? new LocalAppSettingsStore();
+        _settingsStore = settingsStore ?? LocalAppSettingsStore.Instance;
 
         _themeMode = _themeSettingsService.GetThemeMode();
         _isCommandBarOnLeft = _commandBarSettingsService.IsCommandBarOnLeft();

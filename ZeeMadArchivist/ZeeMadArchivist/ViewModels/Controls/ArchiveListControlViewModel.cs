@@ -34,10 +34,10 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         Archives = new ObservableCollection<string>(_archivesSettingsService.GetArchives());
         Archives.CollectionChanged += Archives_OnCollectionChanged;
 
-        if (Archives.Count == 0)
+        if (Archives.Count == 0 && !FirstRunService.Instance.ShouldRunFirstRunExperience())
         {
             var rootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var documentsPath = Path.Combine(rootPath, Resources.DefaultArchive);
+            var documentsPath = Path.Combine(rootPath, Resources.DefaultArchiveName);
 
             if (!Directory.Exists(documentsPath))
             {

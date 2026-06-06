@@ -2,24 +2,28 @@ using System;
 
 namespace CyberFeedForward.TheMadArchivist.Services;
 
-public sealed class FirstRunService(IAppSettingsStore store)
+public sealed class FirstRunService
 {
     private const string FirstRunCompletedKey = "App.FirstRun.Completed";
 
-    private readonly IAppSettingsStore _store = store ?? throw new ArgumentNullException(nameof(store));
+    private FirstRunService() { }
+
+    public IAppSettingsStore Store = LocalAppSettingsStore.Instance;
+
+    public static FirstRunService Instance { get; } = new FirstRunService();
 
     public bool ShouldRunFirstRunExperience()
     {
-        return !_store.TryGetBool(FirstRunCompletedKey, out var completed) || !completed;
+        return !Store.TryGetBool(FirstRunCompletedKey, out var completed) || !completed;
     }
 
     public void MarkFirstRunExperienceCompleted()
     {
-        _store.SetBool(FirstRunCompletedKey, true);
+        Store.SetBool(FirstRunCompletedKey, true);
     }
 
     public void ResetFirstRunExperience()
     {
-        _store.SetBool(FirstRunCompletedKey, false);
+        Store.SetBool(FirstRunCompletedKey, false);
     }
 }

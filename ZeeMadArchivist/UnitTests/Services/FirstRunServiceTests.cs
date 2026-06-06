@@ -10,8 +10,8 @@ public sealed class FirstRunServiceTests
     [TestMethod]
     public void ShouldRunFirstRunExperience_WhenCompletionFlagMissing_ReturnsTrue()
     {
-        var store = new FakeAppSettingsStore();
-        var service = new FirstRunService(store);
+        var service = FirstRunService.Instance;
+        service.Store = new FakeAppSettingsStore();
 
         var result = service.ShouldRunFirstRunExperience();
 
@@ -23,7 +23,9 @@ public sealed class FirstRunServiceTests
     {
         var store = new FakeAppSettingsStore();
         store.SetBool("App.FirstRun.Completed", false);
-        var service = new FirstRunService(store);
+
+        var service = FirstRunService.Instance;
+        service.Store = store;
 
         var result = service.ShouldRunFirstRunExperience();
 
@@ -35,7 +37,9 @@ public sealed class FirstRunServiceTests
     {
         var store = new FakeAppSettingsStore();
         store.SetBool("App.FirstRun.Completed", true);
-        var service = new FirstRunService(store);
+
+        var service = FirstRunService.Instance;
+        service.Store = store;
 
         var result = service.ShouldRunFirstRunExperience();
 
@@ -45,8 +49,8 @@ public sealed class FirstRunServiceTests
     [TestMethod]
     public void MarkFirstRunExperienceCompleted_PersistsCompletionFlag()
     {
-        var store = new FakeAppSettingsStore();
-        var service = new FirstRunService(store);
+        var service = FirstRunService.Instance;
+        service.Store = new FakeAppSettingsStore();
 
         service.MarkFirstRunExperienceCompleted();
 
@@ -56,8 +60,9 @@ public sealed class FirstRunServiceTests
     [TestMethod]
     public void ResetFirstRunExperience_PersistsIncompleteFlag()
     {
-        var store = new FakeAppSettingsStore();
-        var service = new FirstRunService(store);
+        var service = FirstRunService.Instance;
+        service.Store = new FakeAppSettingsStore();
+
         service.MarkFirstRunExperienceCompleted();
 
         service.ResetFirstRunExperience();

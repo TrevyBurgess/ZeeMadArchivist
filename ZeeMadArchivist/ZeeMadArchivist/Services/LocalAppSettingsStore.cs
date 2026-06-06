@@ -6,6 +6,10 @@ public sealed class LocalAppSettingsStore : IAppSettingsStore
 {
     private readonly ApplicationDataContainer _localSettings = ApplicationData.Current.LocalSettings;
 
+    private LocalAppSettingsStore() { }
+
+    public static LocalAppSettingsStore Instance { get; } = new LocalAppSettingsStore();
+
     public bool TryGetBool(string key, out bool value)
     {
         if (_localSettings.Values.TryGetValue(key, out var stored) && stored is bool b)

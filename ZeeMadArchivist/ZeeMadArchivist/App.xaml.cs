@@ -1,23 +1,8 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+﻿using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.Utilities;
-using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.Views.Dialogs;
+using Microsoft.UI.Xaml;
+using System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -53,19 +38,20 @@ namespace CyberFeedForward.TheMadArchivist
             _window = new MainWindow();
             MainWindowInstance = _window;
 
-            _trayIcon = new TrayIconService();
-            _trayIcon.Initialize();
-            _firstRunService = new FirstRunService(new LocalAppSettingsStore());
+            _firstRunService = FirstRunService.Instance;
 
             if (_window.Content is FrameworkElement rootElement)
             {
-                var themeSettings = new ThemeSettingsService(new LocalAppSettingsStore());
+                var themeSettings = new ThemeSettingsService(LocalAppSettingsStore.Instance);
                 AppThemeManager.ApplyThemeMode(rootElement, themeSettings.GetThemeMode());
             }
 
             _window.Activate();
 
             _ = RunFirstRunExperienceAsync();
+
+            _trayIcon = new TrayIconService();
+            _trayIcon.Initialize();
         }
 
         private async System.Threading.Tasks.Task RunFirstRunExperienceAsync()

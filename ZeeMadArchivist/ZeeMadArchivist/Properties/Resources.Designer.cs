@@ -61,11 +61,20 @@ namespace CyberFeedForward.TheMadArchivist.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to ZeeMadArchivist.
+        /// </summary>
+        internal static string DefaultAppFolderName {
+            get {
+                return ResourceManager.GetString("DefaultAppFolderName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to MyArchive.
         /// </summary>
-        internal static string DefaultArchive {
+        internal static string DefaultArchiveName {
             get {
-                return ResourceManager.GetString("DefaultArchive", resourceCulture);
+                return ResourceManager.GetString("DefaultArchiveName", resourceCulture);
             }
         }
     }

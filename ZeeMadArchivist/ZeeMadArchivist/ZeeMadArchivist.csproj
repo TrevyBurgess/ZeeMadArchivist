@@ -199,5 +199,6 @@
     <Content Remove="..\AppTools\Icons\Folder.ico" />
     <Content Remove="..\AppTools\Icons\Music.ico" />
     <Content Remove="..\AppTools\Icons\Pictures.ico" />
+    <Content Remove="..\AppTools\Icons\Tutorials.ico" />
   </ItemGroup>
 </Project>

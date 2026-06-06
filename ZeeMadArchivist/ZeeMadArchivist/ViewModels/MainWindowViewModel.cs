@@ -14,7 +14,7 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
 
     public MainWindowViewModel()
         : this(
-            new CommandBarSettingsService(new LocalAppSettingsStore()),
+            new CommandBarSettingsService(LocalAppSettingsStore.Instance),
             Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments))
     {
     }
