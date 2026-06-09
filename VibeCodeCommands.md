@@ -55,10 +55,6 @@ Here are some the vibe code commands I used.
 - Disable AddArchiveButton when folder path is empty
 - Do not show path in NewArchivePathTextBox when a folder is selected with the folder selector dialog
 
-# On Startup
-
-On Install, 
-
 #### 3.3.2.1. Dialog - NewArchiveDialog
 
 - Add a Button to ArchiveListControl called 'New Archive'. When clicked, will open a dialog called NewArchiveDialog. This dialog will contain a field for a folder path, a dropdown containing a list of unused drive letters, and a save and cancel button.
@@ -82,10 +78,26 @@ On Install,
 - Only show *.ico files in NamedIconSettings
 - Add a button to NamedIconSettings with a Open File image. When clicked, open a new file explorer window, opened to the CustomIcons folder.
 - Refresh NamedIconSettings when contents of CustomIcons changes
+- When CustomIconsSaveButton is pressed, rename CustomIcons. Do not just create a new folder. If new folder exist, warn user. Ask them if they want to merge content.
 
 - Create a method in FolderTools in AppTools called LoadDefaultIcons. This will copy all icons in the Icons folder to CustomIconsFolderPath
 - Add a button in NamedIconSettings control called LoadDefaultIcons. When clicked, copy call LoadDefaultIcons method
 - Update IconList when files CustomIcons folder changes
+
+# On Startup
+
+- Is there a method that is run when the app is first installed?
+- Create a FirstRun service that runs on app startup. When running for the first time, open a dialog for customizing the app.
+- Add a flag to GeneralSettings. When clicked, FirstRun will be set to true. This will show FirstRunCustomizationDialog next time the app is run.
+
+- When FirstRunCustomizationDialog runs, load default settings
+- Add field for selecting initial archive path. Include a folder selector.
+- Add field for selecting initial CustomIcons path. Include a folder selector.
+- Save all settings when FirstRunCustomizationDialog closes
+- Copy default CustomIcons icons when FirstRunCustomizationDialog closes, 
+
+- When FirstRunCustomizationDialog closes, create the CustomIcons folder and copy icons from AppTools.Icons to the folder.
+- Replace the Save and Skip buttons in FirstRunCustomizationDialog with OK button
 
 ## Page - Settings - About
 
@@ -148,10 +160,6 @@ On Install,
 ## Library - ImageTools
 
 - Add a method in Tools.ImageTools.ca called ToIcon. Given the path to an image, create a windows icon. The method will return this icon
-
-
-
-
 
 ## Page - Home Page
 
