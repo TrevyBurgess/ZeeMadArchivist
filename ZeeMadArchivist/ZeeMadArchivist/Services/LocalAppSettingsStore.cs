@@ -1,3 +1,4 @@
+using System;
 using Windows.Storage;
 
 namespace CyberFeedForward.TheMadArchivist.Services;
@@ -8,7 +9,10 @@ public sealed class LocalAppSettingsStore : IAppSettingsStore
 
     private LocalAppSettingsStore() { }
 
-    public static LocalAppSettingsStore Instance { get; } = new LocalAppSettingsStore();
+    private static readonly Lazy<LocalAppSettingsStore> _instance =
+        new Lazy<LocalAppSettingsStore>(() => new LocalAppSettingsStore());
+
+    public static LocalAppSettingsStore Instance => _instance.Value;
 
     public bool TryGetBool(string key, out bool value)
     {

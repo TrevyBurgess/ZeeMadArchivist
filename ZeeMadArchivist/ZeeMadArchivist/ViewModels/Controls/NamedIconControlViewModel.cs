@@ -646,9 +646,20 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
 
     private void EnsureCustomIconsFolderExists(string folderPath)
     {
-        if (string.IsNullOrWhiteSpace(folderPath) || FirstRunService.Instance.ShouldRunFirstRunExperience())
+        if (string.IsNullOrWhiteSpace(folderPath))
         {
             return;
+        }
+
+        try
+        {
+            if (FirstRunService.Instance.ShouldRunFirstRunExperience())
+            {
+                return;
+            }
+        }
+        catch
+        {
         }
 
         try

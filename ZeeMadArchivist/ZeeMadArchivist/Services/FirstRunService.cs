@@ -6,9 +6,15 @@ public sealed class FirstRunService
 {
     private const string FirstRunCompletedKey = "App.FirstRun.Completed";
 
+    private IAppSettingsStore? _store;
+
     private FirstRunService() { }
 
-    public IAppSettingsStore Store = LocalAppSettingsStore.Instance;
+    public IAppSettingsStore Store
+    {
+        get => _store ??= LocalAppSettingsStore.Instance;
+        set => _store = value;
+    }
 
     public static FirstRunService Instance { get; } = new FirstRunService();
 
