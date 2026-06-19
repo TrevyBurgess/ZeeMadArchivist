@@ -61,6 +61,8 @@ public sealed partial class GeneralSettingsControl : UserControl
         try
         {
             var service = FirstRunService.Instance;
+
+            service.DeleteAllSettings();
             service.ResetFirstRunExperience();
 
             var dialog = new ContentDialog

@@ -866,6 +866,11 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         {
             _values[key] = value;
         }
+
+        public void Clear()
+        {
+            _values.Clear();
+        }
     }
 }
 

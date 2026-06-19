@@ -10,4 +10,6 @@ public interface IAppSettingsStore
 
     bool TryGetString(string key, out string value);
     void SetString(string key, string value);
+
+    void Clear();
 }

@@ -70,9 +70,40 @@ public sealed class FirstRunServiceTests
         Assert.IsTrue(service.ShouldRunFirstRunExperience());
     }
 
+    [TestMethod]
+    public void DeleteAllSettings_RemovesFirstRunFlag()
+    {
+        var service = FirstRunService.Instance;
+        service.Store = new FakeAppSettingsStore();
+
+        service.MarkFirstRunExperienceCompleted();
+        service.DeleteAllSettings();
+
+        Assert.IsTrue(service.ShouldRunFirstRunExperience());
+    }
+
+    [TestMethod]
+    public void DeleteAllSettings_RemovesAllStoredValues()
+    {
+        var store = new FakeAppSettingsStore();
+        store.SetBool("App.SomeBool", true);
+        store.SetInt("App.SomeInt", 42);
+        store.SetString("App.SomeString", "value");
+
+        var service = FirstRunService.Instance;
+        service.Store = store;
+        service.DeleteAllSettings();
+
+        Assert.IsFalse(store.TryGetBool("App.SomeBool", out _));
+        Assert.IsFalse(store.TryGetInt("App.SomeInt", out _));
+        Assert.IsFalse(store.TryGetString("App.SomeString", out _));
+    }
+
     private sealed class FakeAppSettingsStore : IAppSettingsStore
     {
         private readonly Dictionary<string, bool> _boolValues = [];
+        private readonly Dictionary<string, int> _intValues = [];
+        private readonly Dictionary<string, string> _stringValues = [];
 
         public bool TryGetBool(string key, out bool value)
         {
@@ -86,22 +117,36 @@ public sealed class FirstRunServiceTests
 
         public bool TryGetInt(string key, out int value)
         {
-            value = 0;
-            return false;
+            return _intValues.TryGetValue(key, out value);
         }
 
         public void SetInt(string key, int value)
         {
+            _intValues[key] = value;
         }
 
         public bool TryGetString(string key, out string value)
         {
+            if (_stringValues.TryGetValue(key, out var stored))
+            {
+                value = stored;
+                return true;
+            }
+
             value = string.Empty;
             return false;
         }
 
         public void SetString(string key, string value)
         {
+            _stringValues[key] = value;
+        }
+
+        public void Clear()
+        {
+            _boolValues.Clear();
+            _intValues.Clear();
+            _stringValues.Clear();
         }
     }
 }

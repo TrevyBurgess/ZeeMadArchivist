@@ -40,6 +40,11 @@ public sealed class SettingsPageViewModelTests
         public void SetString(string key, string value)
         {
         }
+
+        public void Clear()
+        {
+            _boolValues.Clear();
+        }
     }
 
     [TestMethod]

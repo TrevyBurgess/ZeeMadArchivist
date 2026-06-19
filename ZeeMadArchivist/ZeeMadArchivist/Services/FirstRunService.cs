@@ -32,4 +32,9 @@ public sealed class FirstRunService
     {
         Store.SetBool(FirstRunCompletedKey, false);
     }
+
+    public void DeleteAllSettings()
+    {
+        Store.Clear();
+    }
 }

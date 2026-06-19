@@ -24,6 +24,13 @@ public sealed class ArchivesSettingsServiceTests
         public bool TryGetString(string key, out string value) => _stringValues.TryGetValue(key, out value!);
 
         public void SetString(string key, string value) => _stringValues[key] = value;
+
+        public void Clear()
+        {
+            _boolValues.Clear();
+            _intValues.Clear();
+            _stringValues.Clear();
+        }
     }
 
     [TestMethod]

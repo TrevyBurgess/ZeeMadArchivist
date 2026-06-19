@@ -64,4 +64,9 @@ public sealed class LocalAppSettingsStore : IAppSettingsStore
     {
         _localSettings.Values[key] = value;
     }
+
+    public void Clear()
+    {
+        _localSettings.Values.Clear();
+    }
 }

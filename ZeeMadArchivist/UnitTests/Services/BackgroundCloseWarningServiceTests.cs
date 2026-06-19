@@ -47,6 +47,11 @@ public sealed class BackgroundCloseWarningServiceTests
         public void SetString(string key, string value)
         {
         }
+
+        public void Clear()
+        {
+            _values.Clear();
+        }
     }
 
     [TestMethod]

@@ -42,6 +42,13 @@ public sealed class ThemeSettingsServiceTests
         {
             _stringValues[key] = value;
         }
+
+        public void Clear()
+        {
+            _boolValues.Clear();
+            _intValues.Clear();
+            _stringValues.Clear();
+        }
     }
 
     [TestMethod]

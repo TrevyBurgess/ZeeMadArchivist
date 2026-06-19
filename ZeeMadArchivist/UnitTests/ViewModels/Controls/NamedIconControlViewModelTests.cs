@@ -53,6 +53,11 @@ public sealed partial class NamedIconControlViewModelTests
         {
             _values[key] = value;
         }
+
+        public void Clear()
+        {
+            _values.Clear();
+        }
     }
 
     [TestMethod]
