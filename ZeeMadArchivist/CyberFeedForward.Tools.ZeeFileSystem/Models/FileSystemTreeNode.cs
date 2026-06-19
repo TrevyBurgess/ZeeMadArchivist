@@ -1,12 +1,12 @@
 using System.Collections.ObjectModel;
 
-namespace CyberFeedForward.TheMadArchivist.Models;
+namespace CyberFeedForward.Tools.ZeeFileSystem.Models;
 
 public sealed class FileSystemTreeNode(FileSystemEntry entry)
 {
     public FileSystemEntry Entry { get; } = entry;
 
-    public ObservableCollection<FileSystemTreeNode> Children { get; } = new ObservableCollection<FileSystemTreeNode>();
+    public ObservableCollection<FileSystemTreeNode> Children { get; } = [];
 
     public bool IsLoaded { get; set; }
 

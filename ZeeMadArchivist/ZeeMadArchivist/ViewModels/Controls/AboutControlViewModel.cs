@@ -1,19 +1,13 @@
 using CyberFeedForward.TheMadArchivist.Models;
 using System;
 using System.ComponentModel;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 
-public sealed class AboutControlViewModel : INotifyPropertyChanged
+public sealed partial class AboutControlViewModel(AboutModel? model = null) : INotifyPropertyChanged
 {
-    private AboutModel _model;
-
-    public AboutControlViewModel(AboutModel? model = null)
-    {
-        _model = model ?? AboutModel.CreateDefault();
-    }
+    private AboutModel _model = model ?? AboutModel.CreateDefault();
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

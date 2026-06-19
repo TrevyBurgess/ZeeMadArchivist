@@ -13,7 +13,7 @@ public sealed partial class FolderTreeViewControl : UserControl
 {
     private readonly DispatcherQueue _dispatcherQueue;
     private readonly IFileSystemService _fileSystemService;
-    private readonly IFileSystemTreeProvider _treeProvider;
+    private readonly FileSystemTreeProvider _treeProvider;
     private CancellationTokenSource? _loadCts;
 
     public FolderTreeViewControl()
@@ -26,7 +26,7 @@ public sealed partial class FolderTreeViewControl : UserControl
         Unloaded += OnUnloaded;
     }
 
-    public ObservableCollection<FileSystemTreeNode> RootNodes { get; } = new();
+    public ObservableCollection<FileSystemTreeNode> RootNodes { get; } = [];
 
     public string? FolderPath
     {

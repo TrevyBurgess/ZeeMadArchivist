@@ -1,5 +1,5 @@
 using CyberFeedForward.TheMadArchivist.Services;
-using CyberFeedForward.TheMadArchivist.AppTools.FileSystem;
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 using CyberFeedForward.TheMadArchivist.Views.Dialogs;
 using Microsoft.UI.Xaml;
@@ -134,8 +134,9 @@ public sealed partial class ArchiveListControl : UserControl
         {
             folder = await picker.PickSingleFolderAsync();
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Trace.TraceError(ex.ToString());
             return;
         }
 

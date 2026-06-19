@@ -1,4 +1,4 @@
-using CyberFeedForward.TheMadArchivist.AppTools.Graphics;
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Drawing;
@@ -53,8 +53,8 @@ public sealed class ImageToolsTests
             using var icon = ImageTools.ToIcon(tempPath);
 
             Assert.IsNotNull(icon);
-            Assert.IsTrue(icon.Width > 0);
-            Assert.IsTrue(icon.Height > 0);
+            Assert.IsGreaterThan(0, icon.Width);
+            Assert.IsGreaterThan(0, icon.Height);
         }
         finally
         {

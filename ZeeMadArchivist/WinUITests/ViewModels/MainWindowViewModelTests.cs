@@ -3,7 +3,7 @@ using CyberFeedForward.TheMadArchivist.ViewModels;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 
-namespace UnitTests.AA.ViewModels;
+namespace UnitTests.ViewModels;
 
 [TestClass]
 public sealed class MainWindowViewModelTests
@@ -68,9 +68,10 @@ public sealed class MainWindowViewModelTests
     {
         var store = new InMemorySettingsStore();
         var service = new CommandBarSettingsService(store);
-        var vm = new MainWindowViewModel(service, "C:\\");
-
-        vm.IsCommandBarOnLeft = false;
+        _ = new MainWindowViewModel(service, "C:\\")
+        {
+            IsCommandBarOnLeft = false
+        };
 
         Assert.IsFalse(service.IsCommandBarOnLeft());
     }

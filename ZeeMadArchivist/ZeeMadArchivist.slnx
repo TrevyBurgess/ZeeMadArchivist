@@ -4,17 +4,12 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="ZeeMadArchivist/ZeeMadArchivist.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
-    <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
-    <Deploy />
-  </Project>
   <Project Path="AppTools/AppTools.csproj" Id="c210ed71-50ce-4455-ad05-73d2ead0e796">
     <Platform Solution="Debug|ARM64" Project="ARM64" />
     <Platform Solution="Debug|x64" Project="x64" />
     <Platform Solution="Debug|x86" Project="x86" />
   </Project>
+  <Project Path="CyberFeedForward.Tools.ZeeFileSystem/CyberFeedForward.Tools.ZeeFileSystem.csproj" />
   <Project Path="UnitTests/UnitTests.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="Release|x64" Project="x64" />
@@ -24,5 +19,11 @@
     <Platform Solution="*|ARM64" Project="ARM64" />
     <Platform Solution="*|x64" Project="x64" />
     <Platform Solution="*|x86" Project="x86" />
+  </Project>
+  <Project Path="ZeeMadArchivist/ZeeMadArchivist.csproj">
+    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|x64" Project="x64" />
+    <Platform Solution="*|x86" Project="x86" />
+    <Deploy />
   </Project>
 </Solution>

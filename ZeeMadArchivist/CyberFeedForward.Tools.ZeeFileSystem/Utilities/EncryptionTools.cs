@@ -1,10 +1,7 @@
-﻿using CyberFeedForward.TheMadArchivist.AppTools.InternalTools;
-using System;
-using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace CyberFeedForward.TheMadArchivist.AppTools.FileSystem;
+namespace CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 
 public static class EncryptionTools
 {
@@ -64,7 +61,7 @@ public static class EncryptionTools
         hmacStream.FinalizeHash();
     }
 
-    private static void WriteInt32(HmacWriteStream stream, int value)
+    private static void WriteInt32(Stream stream, int value)
     {
         Span<byte> bytes = stackalloc byte[4];
         BitConverter.TryWriteBytes(bytes, value);
@@ -253,4 +250,143 @@ public static class EncryptionTools
         return BitConverter.ToInt32(buffer);
     }
 
+    private sealed class HmacWriteStream(Stream inner, HMAC hmac) : Stream
+    {
+        private readonly Stream _inner = inner;
+        private readonly HMAC _hmac = hmac;
+        private bool _hashFinalized;
+
+        public override bool CanRead => false;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => true;
+
+        public override long Length => _inner.Length;
+
+        public override long Position
+        {
+            get => _inner.Position;
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush() => _inner.Flush();
+
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => _inner.SetLength(value);
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            if (_hashFinalized)
+            {
+                throw new InvalidOperationException("Cannot write after hash has been finalized.");
+            }
+
+            _hmac.TransformBlock(buffer, offset, count, null, 0);
+            _inner.Write(buffer, offset, count);
+        }
+
+        public override void Write(ReadOnlySpan<byte> buffer)
+        {
+            if (_hashFinalized)
+            {
+                throw new InvalidOperationException("Cannot write after hash has been finalized.");
+            }
+
+            if (buffer.Length == 0)
+            {
+                return;
+            }
+
+            var temp = buffer.ToArray();
+            _hmac.TransformBlock(temp, 0, temp.Length, null, 0);
+            _inner.Write(buffer);
+        }
+
+        public void FinalizeHash()
+        {
+            if (_hashFinalized)
+            {
+                return;
+            }
+
+            _hashFinalized = true;
+            _hmac.TransformFinalBlock([], 0, 0);
+
+            if (_hmac.Hash is null)
+            {
+                throw new CryptographicException("HMAC hash was not computed.");
+            }
+
+            _inner.Write(_hmac.Hash, 0, _hmac.Hash.Length);
+            _inner.Flush();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing && !_hashFinalized)
+            {
+                _hmac.TransformFinalBlock([], 0, 0);
+            }
+
+            base.Dispose(disposing);
+        }
+    }
+
+    private sealed class LimitedReadStream(Stream inner, long length) : Stream
+    {
+        private readonly Stream _inner = inner;
+        private long _remaining = length;
+
+        public override bool CanRead => _inner.CanRead;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => _remaining;
+
+        public override long Position
+        {
+            get => 0;
+            set => throw new NotSupportedException();
+        }
+
+        public override void Flush() => throw new NotSupportedException();
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (_remaining <= 0)
+            {
+                return 0;
+            }
+
+            var toRead = (int)Math.Min(count, _remaining);
+            var read = _inner.Read(buffer, offset, toRead);
+            _remaining -= read;
+            return read;
+        }
+
+        public override int Read(Span<byte> buffer)
+        {
+            if (_remaining <= 0)
+            {
+                return 0;
+            }
+
+            var toRead = (int)Math.Min(buffer.Length, _remaining);
+            var read = _inner.Read(buffer[..toRead]);
+            _remaining -= read;
+            return read;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
 }

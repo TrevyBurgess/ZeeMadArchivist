@@ -10,9 +10,9 @@ public sealed class WindowPlacementSettingsServiceTests
 {
     private sealed class InMemorySettingsStore : IAppSettingsStore
     {
-        private readonly Dictionary<string, bool> _boolValues = new();
-        private readonly Dictionary<string, int> _intValues = new();
-        private readonly Dictionary<string, string> _stringValues = new();
+        private readonly Dictionary<string, bool> _boolValues = [];
+        private readonly Dictionary<string, int> _intValues = [];
+        private readonly Dictionary<string, string> _stringValues = [];
 
         public bool TryGetBool(string key, out bool value)
         {

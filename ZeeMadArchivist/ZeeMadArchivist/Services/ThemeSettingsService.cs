@@ -2,16 +2,11 @@ using System;
 
 namespace CyberFeedForward.TheMadArchivist.Services;
 
-public sealed class ThemeSettingsService
+public sealed class ThemeSettingsService(IAppSettingsStore store)
 {
     private const string DarkModeEnabledKey = "Theme.DarkModeEnabled";
     private const string ThemeModeKey = "Theme.Mode";
-    private readonly IAppSettingsStore _store;
-
-    public ThemeSettingsService(IAppSettingsStore store)
-    {
-        _store = store;
-    }
+    private readonly IAppSettingsStore _store = store;
 
     public bool IsDarkModeEnabled()
     {

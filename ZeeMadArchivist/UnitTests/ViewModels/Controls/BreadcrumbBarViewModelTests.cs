@@ -9,20 +9,15 @@ namespace UnitTests.ViewModels.Controls;
 [TestClass]
 public sealed class BreadcrumbBarViewModelTests
 {
-    private sealed class FakeFileSystemService : IFileSystemService
+    private sealed class FakeFileSystemService(Dictionary<string, IReadOnlyList<FileSystemEntry>> entriesByPath) : IFileSystemService
     {
-        private readonly Dictionary<string, IReadOnlyList<FileSystemEntry>> _entriesByPath;
-
-        public FakeFileSystemService(Dictionary<string, IReadOnlyList<FileSystemEntry>> entriesByPath)
-        {
-            _entriesByPath = entriesByPath;
-        }
+        private readonly Dictionary<string, IReadOnlyList<FileSystemEntry>> _entriesByPath = entriesByPath;
 
         public IReadOnlyList<FileSystemEntry> GetEntries(string folderPath)
         {
             return _entriesByPath.TryGetValue(folderPath, out var entries)
                 ? entries
-                : new List<FileSystemEntry>();
+                : [];
         }
     }
 
@@ -30,7 +25,7 @@ public sealed class BreadcrumbBarViewModelTests
     public void BuildCumulativePaths_Null_ReturnsEmpty()
     {
         var paths = BreadcrumbBarViewModel.BuildCumulativePaths(null);
-        Assert.AreEqual(0, paths.Count);
+        Assert.IsEmpty(paths);
     }
 
     [TestMethod]
@@ -48,28 +43,29 @@ public sealed class BreadcrumbBarViewModelTests
     {
         var fs = new FakeFileSystemService(new Dictionary<string, IReadOnlyList<FileSystemEntry>>
         {
-            ["C:\\"] = new List<FileSystemEntry>(),
-            ["C:\\A"] = new List<FileSystemEntry>
-            {
+            ["C:\\"] = [],
+            ["C:\\A"] =
+            [
                 new() { Name = "Sub1", FullPath = "C:\\A\\Sub1", IsFolder = true },
                 new() { Name = "File1.txt", FullPath = "C:\\A\\File1.txt", IsFolder = false },
-            },
-            ["C:\\A\\B"] = new List<FileSystemEntry>(),
+            ],
+            ["C:\\A\\B"] = [],
         });
 
-        var vm = new BreadcrumbBarViewModel(fs);
+        var vm = new BreadcrumbBarViewModel(fs)
+        {
+            FolderPath = "C:\\A\\B"
+        };
 
-        vm.FolderPath = "C:\\A\\B";
-
-        Assert.AreEqual(3, vm.Segments.Count);
+        Assert.HasCount(3, vm.Segments);
         Assert.AreEqual("C:\\", vm.Segments[0].FolderPath);
-        Assert.AreEqual(0, vm.Segments[0].Items.Count);
+        Assert.IsEmpty(vm.Segments[0].Items);
 
         Assert.AreEqual("C:\\A", vm.Segments[1].FolderPath);
-        Assert.AreEqual(1, vm.Segments[1].Items.Count);
+        Assert.HasCount(1, vm.Segments[1].Items);
         Assert.AreEqual("Sub1", vm.Segments[1].Items[0]);
 
         Assert.AreEqual("C:\\A\\B", vm.Segments[2].FolderPath);
-        Assert.AreEqual(0, vm.Segments[2].Items.Count);
+        Assert.IsEmpty(vm.Segments[2].Items);
     }
 }

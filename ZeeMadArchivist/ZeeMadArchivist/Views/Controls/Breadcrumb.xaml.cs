@@ -58,10 +58,10 @@ public sealed partial class Breadcrumb : UserControl
     private static void OnFolderPathChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (Breadcrumb)d;
-        control.Text = control.GetFolderNameFromPath((string?)e.NewValue);
+        control.Text = GetFolderNameFromPath((string?)e.NewValue);
     }
 
-    private string GetFolderNameFromPath(string? folderPath)
+    private static string GetFolderNameFromPath(string? folderPath)
     {
         if (string.IsNullOrWhiteSpace(folderPath))
         {
@@ -96,8 +96,11 @@ public sealed partial class Breadcrumb : UserControl
         var flyout = new MenuFlyout();
         foreach (var item in items)
         {
-            var menuItem = new MenuFlyoutItem { Text = item };
-            menuItem.Tag = BuildSelectedFolderPath(FolderPath, item);
+            var menuItem = new MenuFlyoutItem
+            {
+                Text = item,
+                Tag = BuildSelectedFolderPath(FolderPath, item)
+            };
             menuItem.Click += MenuItem_OnClick;
             flyout.Items.Add(menuItem);
         }

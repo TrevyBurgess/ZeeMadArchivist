@@ -34,7 +34,7 @@ public sealed class ArchivesSettingsServiceTests
 
         var archives = service.GetArchives();
 
-        Assert.AreEqual(0, archives.Count);
+        Assert.IsEmpty(archives);
     }
 
     [TestMethod]
@@ -43,17 +43,17 @@ public sealed class ArchivesSettingsServiceTests
         var store = new InMemorySettingsStore();
         var service = new ArchivesSettingsService(store);
 
-        service.SaveArchives(new List<string>
-        {
+        service.SaveArchives(
+        [
             "C:\\Temp\\A.zip",
             " C:\\Temp\\A.zip ",
             "C:\\Temp\\B.zip",
             "",
-        });
+        ]);
 
         var archives = service.GetArchives();
 
-        Assert.AreEqual(2, archives.Count);
+        Assert.HasCount(2, archives);
         Assert.AreEqual("C:\\Temp\\A.zip", archives[0]);
         Assert.AreEqual("C:\\Temp\\B.zip", archives[1]);
     }

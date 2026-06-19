@@ -15,9 +15,13 @@ namespace CyberFeedForward.TheMadArchivist.AppTools.InternalTools
         private bool _hashFinalized;
 
         public override bool CanRead => false;
+
         public override bool CanSeek => false;
+
         public override bool CanWrite => true;
+
         public override long Length => _inner.Length;
+
         public override long Position
         {
             get => _inner.Position;

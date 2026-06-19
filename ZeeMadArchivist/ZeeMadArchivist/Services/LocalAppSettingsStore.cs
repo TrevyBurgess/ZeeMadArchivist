@@ -10,7 +10,7 @@ public sealed class LocalAppSettingsStore : IAppSettingsStore
     private LocalAppSettingsStore() { }
 
     private static readonly Lazy<LocalAppSettingsStore> _instance =
-        new Lazy<LocalAppSettingsStore>(() => new LocalAppSettingsStore());
+        new(() => new LocalAppSettingsStore());
 
     public static LocalAppSettingsStore Instance => _instance.Value;
 

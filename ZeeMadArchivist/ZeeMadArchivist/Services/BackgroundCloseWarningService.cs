@@ -2,16 +2,11 @@ using System;
 
 namespace CyberFeedForward.TheMadArchivist.Services;
 
-public sealed class BackgroundCloseWarningService
+public sealed class BackgroundCloseWarningService(IAppSettingsStore store)
 {
     private const string WarnedKey = "App.CloseToBackground.Warned";
 
-    private readonly IAppSettingsStore _store;
-
-    public BackgroundCloseWarningService(IAppSettingsStore store)
-    {
-        _store = store ?? throw new ArgumentNullException(nameof(store));
-    }
+    private readonly IAppSettingsStore _store = store ?? throw new ArgumentNullException(nameof(store));
 
     public bool ShouldShowWarning()
     {

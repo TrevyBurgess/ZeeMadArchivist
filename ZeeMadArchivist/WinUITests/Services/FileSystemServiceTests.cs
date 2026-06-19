@@ -13,7 +13,7 @@ public sealed class FileSystemServiceTests
     {
         var service = new FileSystemService();
         var entries = service.GetEntries("Z:\\this-path-should-not-exist-123456789");
-        Assert.AreEqual(0, entries.Count);
+        Assert.HasCount(0, entries);
     }
 
     [TestMethod]
@@ -32,7 +32,7 @@ public sealed class FileSystemServiceTests
             var service = new FileSystemService();
             var entries = service.GetEntries(root);
 
-            Assert.AreEqual(4, entries.Count);
+            Assert.HasCount(4, entries);
 
             Assert.IsTrue(entries[0].IsFolder);
             Assert.IsTrue(entries[1].IsFolder);

@@ -5,27 +5,19 @@ using System.IO;
 
 namespace CyberFeedForward.TheMadArchivist.Services;
 
-public sealed class StartupSettingsService
+public sealed class StartupSettingsService(
+    Func<string>? getExecutablePath = null,
+    Func<(string? value, bool exists)>? tryReadRunValue = null,
+    Action<string>? writeRunValue = null,
+    Action? deleteRunValue = null)
 {
     private const string RunKeyPath = "Software\\Microsoft\\Windows\\CurrentVersion\\Run";
     private const string RunValueName = "ZeeMadArchivist";
 
-    private readonly Func<string> _getExecutablePath;
-    private readonly Func<(string? value, bool exists)> _tryReadRunValue;
-    private readonly Action<string> _writeRunValue;
-    private readonly Action _deleteRunValue;
-
-    public StartupSettingsService(
-        Func<string>? getExecutablePath = null,
-        Func<(string? value, bool exists)>? tryReadRunValue = null,
-        Action<string>? writeRunValue = null,
-        Action? deleteRunValue = null)
-    {
-        _getExecutablePath = getExecutablePath ?? GetDefaultExecutablePath;
-        _tryReadRunValue = tryReadRunValue ?? TryReadRunValue;
-        _writeRunValue = writeRunValue ?? WriteRunValue;
-        _deleteRunValue = deleteRunValue ?? DeleteRunValue;
-    }
+    private readonly Func<string> _getExecutablePath = getExecutablePath ?? GetDefaultExecutablePath;
+    private readonly Func<(string? value, bool exists)> _tryReadRunValue = tryReadRunValue ?? TryReadRunValue;
+    private readonly Action<string> _writeRunValue = writeRunValue ?? WriteRunValue;
+    private readonly Action _deleteRunValue = deleteRunValue ?? DeleteRunValue;
 
     public bool IsStartupEnabled()
     {
@@ -115,12 +107,8 @@ public sealed class StartupSettingsService
 
     private static void WriteRunValue(string value)
     {
-        using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath, writable: true);
-        if (key is null)
-        {
-            throw new InvalidOperationException("Unable to open the Windows startup registry key.");
-        }
-
+        using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath, writable: true) ?? throw new InvalidOperationException("Unable to open the Windows startup registry key.");
+        
         key.SetValue(RunValueName, value, RegistryValueKind.String);
     }
 

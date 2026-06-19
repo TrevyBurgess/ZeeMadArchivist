@@ -33,7 +33,7 @@ public sealed class SettingsPageLayoutTests
             var namedIconControl = (NamedIconControl)page.FindName("NamedIconControl");
             Assert.IsNotNull(namedIconControl);
 
-            Assert.AreEqual(3, tabView.TabItems.Count);
+            Assert.HasCount(3, tabView.TabItems);
         });
     }
 }

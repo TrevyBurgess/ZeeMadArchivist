@@ -1,7 +1,7 @@
-using CyberFeedForward.TheMadArchivist.AppTools.FileSystem;
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTests.Tools;
+namespace UnitTests.Tests;
 
 [TestClass]
 public sealed class ArchivingTests

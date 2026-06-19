@@ -4,6 +4,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -34,14 +35,7 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         Archives = new ObservableCollection<string>(_archivesSettingsService.GetArchives());
         Archives.CollectionChanged += Archives_OnCollectionChanged;
 
-        var isFirstRun = false;
-        try
-        {
-            isFirstRun = FirstRunService.Instance.ShouldRunFirstRunExperience();
-        }
-        catch
-        {
-        }
+        var isFirstRun = FirstRunService.Instance.ShouldRunFirstRunExperience();
 
         if (Archives.Count == 0 && !isFirstRun)
         {
@@ -116,8 +110,9 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
                 return ArchiveAddResult.NotFound;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
             return ArchiveAddResult.Error;
         }
 

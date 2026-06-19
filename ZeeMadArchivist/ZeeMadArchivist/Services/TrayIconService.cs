@@ -1,5 +1,7 @@
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.UI.Xaml;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 
@@ -184,8 +186,9 @@ public sealed partial class TrayIconService(Func<string?>? getIconFilePath = nul
 
             return null;
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
             return null;
         }
     }
@@ -300,77 +303,17 @@ public sealed partial class TrayIconService(Func<string?>? getIconFilePath = nul
 
         public IntPtr LoadIconFromFile(string path)
         {
-            return LoadImage(IntPtr.Zero, path, IMAGE_ICON, 0, 0, LR_LOADFROMFILE | LR_DEFAULTSIZE);
+            return IconTools.LoadIconFromFile(path);
         }
 
         public IntPtr LoadApplicationIcon()
         {
-            try
-            {
-                var processPath = Environment.ProcessPath;
-                if (string.IsNullOrWhiteSpace(processPath) || !File.Exists(processPath))
-                {
-                    return IntPtr.Zero;
-                }
-
-                var largeIcons = new IntPtr[1];
-                var smallIcons = new IntPtr[1];
-                var extracted = ExtractIconEx(processPath, 0, largeIcons, smallIcons, 1);
-                if (extracted <= 0)
-                {
-                    return LoadShellAssociatedIcon(processPath);
-                }
-
-                if (smallIcons[0] != IntPtr.Zero)
-                {
-                    if (largeIcons[0] != IntPtr.Zero)
-                    {
-                        DestroyIconNative(largeIcons[0]);
-                    }
-
-                    return smallIcons[0];
-                }
-
-                if (largeIcons[0] != IntPtr.Zero)
-                {
-                    return largeIcons[0];
-                }
-
-                return LoadShellAssociatedIcon(processPath);
-            }
-            catch
-            {
-                return IntPtr.Zero;
-            }
-        }
-
-        private static IntPtr LoadShellAssociatedIcon(string filePath)
-        {
-            try
-            {
-                var result = SHGetFileInfo(
-                    filePath,
-                    0,
-                    out var info,
-                    (uint)Marshal.SizeOf<SHFILEINFO>(),
-                    SHGFI_ICON | SHGFI_SMALLICON);
-
-                if (result == IntPtr.Zero)
-                {
-                    return IntPtr.Zero;
-                }
-
-                return info.hIcon;
-            }
-            catch
-            {
-                return IntPtr.Zero;
-            }
+            return IconTools.LoadApplicationIcon();
         }
 
         public void DestroyIcon(IntPtr hIcon)
         {
-            DestroyIconNative(hIcon);
+            IconTools.DestroyIcon(hIcon);
         }
 
         public bool AddNotifyIcon(IntPtr hwnd, uint iconId, uint callbackMessage, IntPtr hIcon, string tooltip)
@@ -433,32 +376,6 @@ public sealed partial class TrayIconService(Func<string?>? getIconFilePath = nul
         }
     }
 
-    [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern int ExtractIconEx(string lpszFile, int nIconIndex, [Out] IntPtr[]? phiconLarge, [Out] IntPtr[]? phiconSmall, uint nIcons);
-
-    [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-    private static extern IntPtr SHGetFileInfo(
-        string pszPath,
-        uint dwFileAttributes,
-        out SHFILEINFO psfi,
-        uint cbFileInfo,
-        uint uFlags);
-
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-    private struct SHFILEINFO
-    {
-        public IntPtr hIcon;
-        public int iIcon;
-        public uint dwAttributes;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 260)]
-        public string szDisplayName;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 80)]
-        public string szTypeName;
-    }
-
-    private const uint SHGFI_ICON = 0x000000100;
-    private const uint SHGFI_SMALLICON = 0x000000001;
-
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
     private struct WNDCLASSEX
     {
@@ -503,10 +420,6 @@ public sealed partial class TrayIconService(Func<string?>? getIconFilePath = nul
     private const uint NIM_ADD = 0x00000000;
     private const uint NIM_DELETE = 0x00000002;
 
-    private const uint IMAGE_ICON = 1;
-    private const uint LR_LOADFROMFILE = 0x00000010;
-    private const uint LR_DEFAULTSIZE = 0x00000040;
-
     private const uint TPM_RIGHTBUTTON = 0x0002;
 
     private const uint MF_STRING = 0x00000000;
@@ -539,13 +452,6 @@ public sealed partial class TrayIconService(Func<string?>? getIconFilePath = nul
 
     [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
     private static extern bool Shell_NotifyIcon(uint dwMessage, [In] ref NOTIFYICONDATA lpData);
-
-    [LibraryImport("user32.dll", SetLastError = true, StringMarshalling = StringMarshalling.Utf16, EntryPoint = "LoadImageW")]
-    private static partial IntPtr LoadImage(IntPtr hInst, string name, uint type, int cx, int cy, uint fuLoad);
-
-    [LibraryImport("user32.dll", SetLastError = true, EntryPoint = "DestroyIcon")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static partial bool DestroyIconNative(IntPtr hIcon);
 
     [LibraryImport("user32.dll", SetLastError = true, EntryPoint = "GetCursorPos")]
     [return: MarshalAs(UnmanagedType.Bool)]

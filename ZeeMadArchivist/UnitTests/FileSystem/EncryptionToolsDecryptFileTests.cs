@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Security.Cryptography;
 
-namespace UnitTests.Tools;
+namespace UnitTests.FileSystem;
 
 [TestClass]
 public sealed class EncryptionToolsDecryptFileTests
@@ -25,8 +25,8 @@ public sealed class EncryptionToolsDecryptFileTests
 
             File.WriteAllBytes(inputPath, inputBytes);
 
-            global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.EncryptionTools.EncryptFile(inputPath, encryptedPath);
-            global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.EncryptionTools.DecryptFile(encryptedPath, outputPath);
+            global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.EncryptionTools.EncryptFile(inputPath, encryptedPath);
+            global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.EncryptionTools.DecryptFile(encryptedPath, outputPath);
 
             var outputBytes = File.ReadAllBytes(outputPath);
             CollectionAssert.AreEqual(inputBytes, outputBytes);
@@ -48,8 +48,8 @@ public sealed class EncryptionToolsDecryptFileTests
 
         try
         {
-            File.WriteAllBytes(inputPath, new byte[] { 1, 2, 3, 4, 5 });
-            global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.EncryptionTools.EncryptFile(inputPath, encryptedPath);
+            File.WriteAllBytes(inputPath, [1, 2, 3, 4, 5]);
+            global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.EncryptionTools.EncryptFile(inputPath, encryptedPath);
 
             var bytes = File.ReadAllBytes(encryptedPath);
             bytes[Math.Min(10, bytes.Length - 1)] ^= 0xFF;
@@ -57,7 +57,7 @@ public sealed class EncryptionToolsDecryptFileTests
 
             try
             {
-                global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.EncryptionTools.DecryptFile(encryptedPath, outputPath);
+                global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.EncryptionTools.DecryptFile(encryptedPath, outputPath);
                 Assert.Fail("Expected CryptographicException was not thrown.");
             }
             catch (CryptographicException)
@@ -80,11 +80,11 @@ public sealed class EncryptionToolsDecryptFileTests
 
         try
         {
-            File.WriteAllBytes(encryptedPath, new byte[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+            File.WriteAllBytes(encryptedPath, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]);
 
             try
             {
-                global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.EncryptionTools.DecryptFile(encryptedPath, outputPath);
+                global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.EncryptionTools.DecryptFile(encryptedPath, outputPath);
                 Assert.Fail("Expected CryptographicException was not thrown.");
             }
             catch (CryptographicException)

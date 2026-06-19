@@ -12,9 +12,10 @@ public sealed class BreadcrumbControlTests
     {
         WinUiTestHelper.Run(() =>
         {
-            var control = new Breadcrumb();
-
-            control.FolderPath = "C:\\Temp\\MyFolder\\";
+            var control = new Breadcrumb
+            {
+                FolderPath = "C:\\Temp\\MyFolder\\"
+            };
 
             Assert.AreEqual("MyFolder", control.Text);
         });
@@ -25,9 +26,10 @@ public sealed class BreadcrumbControlTests
     {
         WinUiTestHelper.Run(() =>
         {
-            var control = new Breadcrumb();
-
-            control.FolderPath = null;
+            var control = new Breadcrumb
+            {
+                FolderPath = null
+            };
 
             Assert.AreEqual(string.Empty, control.Text);
         });

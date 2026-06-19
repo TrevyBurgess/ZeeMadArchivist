@@ -1,7 +1,6 @@
 using CyberFeedForward.TheMadArchivist.Views.Pages;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer;
 
 namespace UnitTests.Tests.Navigation;
 

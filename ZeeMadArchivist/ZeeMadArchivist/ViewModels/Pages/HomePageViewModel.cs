@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Pages;
 
-public sealed class HomePageViewModel : INotifyPropertyChanged
+public sealed partial class HomePageViewModel : INotifyPropertyChanged
 {
     private string _folderPath = string.Empty;
 
@@ -15,8 +15,9 @@ public sealed class HomePageViewModel : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public string Title => "Home";
-    public string Description => "Welcome to The Mad Archivist.";
+    public static string Title => "Home";
+
+    public static string Description => "Welcome to The Mad Archivist.";
 
     public string FolderPath
     {

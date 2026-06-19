@@ -1,4 +1,3 @@
-using CyberFeedForward.TheMadArchivist.Models;
 using CyberFeedForward.TheMadArchivist.Services;
 using System;
 using System.Collections.Generic;
@@ -10,15 +9,10 @@ using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 
-public sealed partial class BreadcrumbBarViewModel : INotifyPropertyChanged
+public sealed partial class BreadcrumbBarViewModel(IFileSystemService fileSystemService) : INotifyPropertyChanged
 {
-    private readonly IFileSystemService _fileSystemService;
+    private readonly IFileSystemService _fileSystemService = fileSystemService ?? throw new ArgumentNullException(nameof(fileSystemService));
     private string? _folderPath = "C:\\\\";
-
-    public BreadcrumbBarViewModel(IFileSystemService fileSystemService)
-    {
-        _fileSystemService = fileSystemService ?? throw new ArgumentNullException(nameof(fileSystemService));
-    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -108,15 +102,9 @@ public sealed partial class BreadcrumbBarViewModel : INotifyPropertyChanged
     }
 }
 
-public sealed class BreadcrumbSegmentViewModel
+public sealed class BreadcrumbSegmentViewModel(string folderPath, IReadOnlyList<string> items)
 {
-    public BreadcrumbSegmentViewModel(string folderPath, IReadOnlyList<string> items)
-    {
-        FolderPath = folderPath;
-        Items = items;
-    }
+    public string FolderPath { get; } = folderPath;
 
-    public string FolderPath { get; }
-
-    public IReadOnlyList<string> Items { get; }
+    public IReadOnlyList<string> Items { get; } = items;
 }

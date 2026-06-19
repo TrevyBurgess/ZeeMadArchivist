@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace UnitTests.ViewModels.Controls;
 
 [TestClass]
-public sealed class NamedIconControlViewModelTests
+public sealed partial class NamedIconControlViewModelTests
 {
     private sealed class FakeAppSettingsStore : IAppSettingsStore
     {
@@ -71,7 +71,7 @@ public sealed class NamedIconControlViewModelTests
 
         vm.LoadFromJsonFile("C:\\does-not-exist.json");
 
-        Assert.AreEqual(0, vm.Items.Count);
+        Assert.IsEmpty(vm.Items);
         Assert.IsFalse(vm.IsSaveEnabled);
     }
 
@@ -85,7 +85,7 @@ public sealed class NamedIconControlViewModelTests
 
         vm.LoadFromJsonFile("C:\\data.json");
 
-        Assert.AreEqual(2, vm.Items.Count);
+        Assert.HasCount(2, vm.Items);
         Assert.AreEqual("C:/icons/a.png", vm.Items[0].IconPath);
         Assert.AreEqual("Alpha", vm.Items[0].Text);
         Assert.IsFalse(vm.IsSaveEnabled);
@@ -328,7 +328,7 @@ public sealed class NamedIconControlViewModelTests
             CustomIconsFolderPath = "C:\\Icons"
         };
 
-        Assert.AreEqual(2, vm.IconList.Count);
+        Assert.HasCount(2, vm.IconList);
         Assert.AreEqual("a", vm.IconList[0].Name);
         Assert.AreEqual("b", vm.IconList[1].Name);
     }
@@ -354,7 +354,7 @@ public sealed class NamedIconControlViewModelTests
             CustomIconsFolderPath = "C:\\Icons"
         };
 
-        Assert.AreEqual(2, vm.IconList.Count);
+        Assert.HasCount(2, vm.IconList);
         Assert.AreEqual("a", vm.IconList[0].Name);
         Assert.AreEqual("d", vm.IconList[1].Name);
     }
@@ -374,7 +374,7 @@ public sealed class NamedIconControlViewModelTests
             CustomIconsFolderPath = "C:\\Icons"
         };
 
-        Assert.AreEqual(0, vm.IconList.Count);
+        Assert.IsEmpty(vm.IconList);
     }
 
     [TestMethod]
@@ -402,7 +402,7 @@ public sealed class NamedIconControlViewModelTests
         Assert.AreEqual(0, result.ImportedCount);
         Assert.AreEqual(1, result.SkippedCount);
         Assert.IsFalse(result.WasCancelled);
-        Assert.AreEqual(0, savedPaths.Count);
+        Assert.IsEmpty(savedPaths);
     }
 
     [TestMethod]
@@ -430,7 +430,7 @@ public sealed class NamedIconControlViewModelTests
         Assert.AreEqual(1, result.ImportedCount);
         Assert.AreEqual(0, result.SkippedCount);
         Assert.IsFalse(result.WasCancelled);
-        Assert.AreEqual(1, savedPaths.Count);
+        Assert.HasCount(1, savedPaths);
         Assert.AreEqual("C:\\Icons\\a.ico", savedPaths[0]);
     }
 
@@ -459,7 +459,7 @@ public sealed class NamedIconControlViewModelTests
         Assert.AreEqual(0, result.ImportedCount);
         Assert.AreEqual(0, result.SkippedCount);
         Assert.IsTrue(result.WasCancelled);
-        Assert.AreEqual(0, savedPaths.Count);
+        Assert.IsEmpty(savedPaths);
     }
 
     [TestMethod]
@@ -495,8 +495,8 @@ public sealed class NamedIconControlViewModelTests
         Assert.AreEqual(1, result.ImportedCount);
         Assert.AreEqual(0, result.SkippedCount);
         Assert.IsFalse(result.WasCancelled);
-        Assert.AreEqual(1, savedPaths.Count);
-        Assert.AreEqual(1, result.Errors.Count);
+        Assert.HasCount(1, savedPaths);
+        Assert.HasCount(1, result.Errors);
     }
 
     [TestMethod]
@@ -511,9 +511,10 @@ public sealed class NamedIconControlViewModelTests
             directoryExists: _ => false,
             createDirectory: _ => created++,
             enumerateFiles: _ => [],
-            fileExists: _ => false);
-
-        vm.CustomIconsFolderPath = "C:\\Icons";
+            fileExists: _ => false)
+        {
+            CustomIconsFolderPath = "C:\\Icons"
+        };
 
         Assert.AreEqual(0, created);
     }
@@ -564,18 +565,18 @@ public sealed class NamedIconControlViewModelTests
             CustomIconsFolderPath = "C:\\Icons"
         };
 
-        Assert.AreEqual(1, vm.IconList.Count);
+        Assert.HasCount(1, vm.IconList);
         Assert.AreEqual("a", vm.IconList[0].Name);
 
         files = ["C:\\Icons\\a.ico", "C:\\Icons\\b.ico"];
         watcher.RaiseIconsChanged();
 
-        Assert.AreEqual(2, vm.IconList.Count);
+        Assert.HasCount(2, vm.IconList);
         Assert.AreEqual("a", vm.IconList[0].Name);
         Assert.AreEqual("b", vm.IconList[1].Name);
     }
 
-    private sealed class FakeCustomIconsFolderWatcher : NamedIconControlViewModel.ICustomIconsFolderWatcher
+    private sealed partial class FakeCustomIconsFolderWatcher : NamedIconControlViewModel.ICustomIconsFolderWatcher
     {
         public event EventHandler? IconsChanged;
 

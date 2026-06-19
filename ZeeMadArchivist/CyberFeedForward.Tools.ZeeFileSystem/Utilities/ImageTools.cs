@@ -1,9 +1,7 @@
-using System;
 using System.Drawing;
-using System.IO;
 using System.Runtime.InteropServices;
 
-namespace CyberFeedForward.TheMadArchivist.AppTools.Graphics;
+namespace CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 
 public static partial class ImageTools
 {
@@ -24,8 +22,6 @@ public static partial class ImageTools
 
         try
         {
-            
-
             using var tempIcon = Icon.FromHandle(hIcon);
             return (Icon)tempIcon.Clone();
         }
@@ -44,7 +40,7 @@ public static partial class ImageTools
             throw new ArgumentException("File path cannot be empty.", nameof(filePath));
         }
 
-        var directory = System.IO.Path.GetDirectoryName(filePath);
+        var directory = Path.GetDirectoryName(filePath);
         if (!string.IsNullOrWhiteSpace(directory) && !Directory.Exists(directory))
         {
             Directory.CreateDirectory(directory);

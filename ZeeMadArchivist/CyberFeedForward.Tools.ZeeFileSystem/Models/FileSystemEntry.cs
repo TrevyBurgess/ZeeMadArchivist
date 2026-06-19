@@ -1,4 +1,4 @@
-namespace CyberFeedForward.TheMadArchivist.Models;
+namespace CyberFeedForward.Tools.ZeeFileSystem.Models;
 
 public sealed class FileSystemEntry
 {

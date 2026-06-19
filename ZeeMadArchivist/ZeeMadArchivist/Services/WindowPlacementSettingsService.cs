@@ -2,19 +2,14 @@ using System;
 
 namespace CyberFeedForward.TheMadArchivist.Services;
 
-public sealed class WindowPlacementSettingsService
+public sealed class WindowPlacementSettingsService(IAppSettingsStore store)
 {
     private const string WindowXKey = "Window.X";
     private const string WindowYKey = "Window.Y";
     private const string WindowWidthKey = "Window.Width";
     private const string WindowHeightKey = "Window.Height";
 
-    private readonly IAppSettingsStore _store;
-
-    public WindowPlacementSettingsService(IAppSettingsStore store)
-    {
-        _store = store;
-    }
+    private readonly IAppSettingsStore _store = store;
 
     public bool TryGetPlacement(out WindowPlacement placement)
     {
