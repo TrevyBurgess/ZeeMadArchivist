@@ -25,13 +25,13 @@ public sealed class FileSystemTreeProviderTests
             var provider = new FileSystemTreeProvider(service);
 
             var rootNodes = provider.CreateRoot(root);
-            Assert.AreEqual(1, rootNodes.Count);
+            Assert.HasCount(1, rootNodes);
 
             var rootNode = rootNodes[0];
             provider.LoadChildren(rootNode);
 
             Assert.IsTrue(rootNode.IsLoaded);
-            Assert.AreEqual(2, rootNode.Children.Count);
+            Assert.HasCount(2, rootNode.Children);
 
             var names = rootNode.Children.Select(c => c.Name).ToList();
             CollectionAssert.AreEquivalent(new List<string> { "FolderA", "FileA.txt" }, names);

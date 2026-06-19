@@ -134,6 +134,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AppTools\AppTools.csproj" />
+    <ProjectReference Include="..\CyberFeedForward.Tools.ZeeFileSystem\CyberFeedForward.Tools.ZeeFileSystem.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\AppTools\Icons\**\*.*" TargetPath="Icons\%(RecursiveDir)%(Filename)%(Extension)">

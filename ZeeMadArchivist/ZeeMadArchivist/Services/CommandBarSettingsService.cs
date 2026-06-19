@@ -1,14 +1,9 @@
 namespace CyberFeedForward.TheMadArchivist.Services;
 
-public sealed class CommandBarSettingsService
+public sealed class CommandBarSettingsService(IAppSettingsStore store)
 {
     private const string CommandBarOnLeftKey = "Layout.CommandBarOnLeft";
-    private readonly IAppSettingsStore _store;
-
-    public CommandBarSettingsService(IAppSettingsStore store)
-    {
-        _store = store;
-    }
+    private readonly IAppSettingsStore _store = store;
 
     public bool IsCommandBarOnLeft()
     {

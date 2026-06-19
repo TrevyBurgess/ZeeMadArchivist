@@ -10,7 +10,7 @@ public sealed partial class ResizeCursorBorder : UserControl
 {
     private readonly Border _root;
     private Brush? _normalBackground;
-    private Brush? _highlightBackground;
+    private readonly Brush? _highlightBackground;
 
     public InputCursor? ResizeCursor => ProtectedCursor;
 

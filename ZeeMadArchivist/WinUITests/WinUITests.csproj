@@ -57,6 +57,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AppTools\AppTools.csproj" />
+    <ProjectReference Include="..\CyberFeedForward.Tools.ZeeFileSystem\CyberFeedForward.Tools.ZeeFileSystem.csproj" />
     <ProjectReference Include="..\ZeeMadArchivist\ZeeMadArchivist.csproj" />
   </ItemGroup>
 

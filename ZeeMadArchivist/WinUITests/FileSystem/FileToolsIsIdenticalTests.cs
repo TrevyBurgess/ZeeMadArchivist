@@ -1,4 +1,4 @@
-using CyberFeedForward.TheMadArchivist.AppTools.FileSystem;
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
@@ -137,8 +137,8 @@ public sealed class FileToolsIsIdenticalTests
 
         try
         {
-            File.WriteAllBytes(path1, Array.Empty<byte>());
-            File.WriteAllBytes(path2, Array.Empty<byte>());
+            File.WriteAllBytes(path1, []);
+            File.WriteAllBytes(path2, []);
 
             Assert.IsTrue(FileTools.IsIdentical(path1, path2));
         }

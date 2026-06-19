@@ -19,7 +19,7 @@ public sealed class BreadcrumbMenuSelectionTests
             var control = new Breadcrumb
             {
                 FolderPath = "C:\\Root",
-                Items = new List<string> { "Child" },
+                Items = ["Child"],
             };
 
             string? selected = null;

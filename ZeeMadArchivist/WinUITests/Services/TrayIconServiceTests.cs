@@ -11,7 +11,7 @@ public sealed class TrayIconServiceTests
 {
     private sealed class FakePopupMenu : TrayIconService.ITrayPopupMenu
     {
-        public IntPtr Handle => new IntPtr(123);
+        public IntPtr Handle => new(123);
 
         public System.Collections.Generic.List<(uint id, string text)> Items { get; } = [];
 
@@ -128,8 +128,8 @@ public sealed class TrayIconServiceTests
 
             var openIndex = Array.IndexOf(texts, "Open");
             var exitIndex = Array.IndexOf(texts, "Exit");
-            Assert.IsTrue(openIndex >= 0);
-            Assert.IsTrue(exitIndex > openIndex);
+            Assert.IsGreaterThanOrEqualTo(0, openIndex);
+            Assert.IsGreaterThan(openIndex, exitIndex);
             CollectionAssert.Contains(texts, "<separator>");
             Assert.AreEqual("<separator>", texts[openIndex + 1]);
         }

@@ -1,9 +1,8 @@
-using CyberFeedForward.TheMadArchivist.Utilities;
 using CyberFeedForward.TheMadArchivist.Services;
+using CyberFeedForward.TheMadArchivist.Utilities;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer;
 
 namespace UnitTests.Tests.Utilities;
 

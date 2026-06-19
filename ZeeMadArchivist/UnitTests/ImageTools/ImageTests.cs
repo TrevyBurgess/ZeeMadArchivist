@@ -1,11 +1,10 @@
-using CyberFeedForward.TheMadArchivist.AppTools.Graphics;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 
-namespace UnitTests.Tools;
+namespace UnitTests.ImageTools;
 
 [TestClass]
 public sealed class ImageTests
@@ -15,7 +14,7 @@ public sealed class ImageTests
     {
         try
         {
-            ImageTools.ToIcon("");
+            CyberFeedForward.Tools.ZeeFileSystem.Utilities.ImageTools.ToIcon("");
             Assert.Fail("Expected ArgumentException was not thrown.");
         }
         catch (ArgumentException)
@@ -28,7 +27,7 @@ public sealed class ImageTests
     {
         try
         {
-            ImageTools.ToIcon("C:\\this-file-should-not-exist-12345.png");
+            CyberFeedForward.Tools.ZeeFileSystem.Utilities.ImageTools.ToIcon("C:\\this-file-should-not-exist-12345.png");
             Assert.Fail("Expected FileNotFoundException was not thrown.");
         }
         catch (FileNotFoundException)
@@ -50,11 +49,11 @@ public sealed class ImageTests
                 bmp.Save(tempPath, ImageFormat.Png);
             }
 
-            using var icon = ImageTools.ToIcon(tempPath);
+            using var icon = CyberFeedForward.Tools.ZeeFileSystem.Utilities.ImageTools.ToIcon(tempPath);
 
             Assert.IsNotNull(icon);
-            Assert.IsTrue(icon.Width > 0);
-            Assert.IsTrue(icon.Height > 0);
+            Assert.IsGreaterThan(0, icon.Width);
+            Assert.IsGreaterThan(0, icon.Height);
         }
         finally
         {

@@ -1,6 +1,5 @@
 using CyberFeedForward.TheMadArchivist.ViewModels.Controls;
-using CyberFeedForward.TheMadArchivist.AppTools.FileSystem;
-using CyberFeedForward.TheMadArchivist.AppTools.Graphics;
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -52,8 +51,9 @@ public sealed partial class NamedIconControl : UserControl
         {
             folder = await picker.PickSingleFolderAsync();
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Trace.TraceError(ex.ToString());
             return;
         }
 
@@ -188,8 +188,9 @@ public sealed partial class NamedIconControl : UserControl
         {
             files = await picker.PickMultipleFilesAsync();
         }
-        catch
+        catch (Exception ex)
         {
+            System.Diagnostics.Trace.TraceError(ex.ToString());
             return;
         }
 

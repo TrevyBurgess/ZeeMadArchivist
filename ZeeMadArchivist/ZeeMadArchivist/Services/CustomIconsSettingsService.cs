@@ -2,15 +2,10 @@ using System;
 
 namespace CyberFeedForward.TheMadArchivist.Services;
 
-public sealed class CustomIconsSettingsService
+public sealed class CustomIconsSettingsService(IAppSettingsStore store)
 {
     private const string CustomIconsFolderPathKey = "CustomIcons.FolderPath";
-    private readonly IAppSettingsStore _store;
-
-    public CustomIconsSettingsService(IAppSettingsStore store)
-    {
-        _store = store ?? throw new ArgumentNullException(nameof(store));
-    }
+    private readonly IAppSettingsStore _store = store ?? throw new ArgumentNullException(nameof(store));
 
     public string GetCustomIconsFolderPath()
     {

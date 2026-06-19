@@ -38,7 +38,7 @@ public sealed partial class FolderContentsControl : UserControl
         _loadCts = null;
     }
 
-    public ObservableCollection<FileSystemEntry> Entries { get; } = new();
+    public ObservableCollection<FileSystemEntry> Entries { get; } = [];
 
     public string? FolderPath
     {

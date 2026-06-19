@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.Json;
 
@@ -30,8 +31,9 @@ public sealed class ArchivesSettingsService(IAppSettingsStore store)
                 .Select(p => p.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase)];
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
             return [];
         }
     }

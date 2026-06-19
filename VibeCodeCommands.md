@@ -7,6 +7,12 @@ Here are some the vibe code commands I used.
 
 - Update the title to show app title and page in the form "App name - Page name"
 
+## 1.1. Helper projects - ZeeFileSystem
+
+- Create a WinUI Class Library project called ZeeFileSystem.
+- Rename ZeeFileSystem to CyberFeedForward.Tools.ZeeFileSystem
+- Move all API calls that interact with the Windows File system to ZeeFileSystem
+
 # 2. Layout
 
 - Add Home page

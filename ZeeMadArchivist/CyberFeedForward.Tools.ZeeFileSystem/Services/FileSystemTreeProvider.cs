@@ -1,8 +1,7 @@
-using CyberFeedForward.TheMadArchivist.Models;
+using CyberFeedForward.Tools.ZeeFileSystem.Models;
 using System.Collections.ObjectModel;
-using System.IO;
 
-namespace CyberFeedForward.TheMadArchivist.Services;
+namespace CyberFeedForward.Tools.ZeeFileSystem.Services;
 
 public sealed class FileSystemTreeProvider(IFileSystemService fileSystemService) : IFileSystemTreeProvider
 {
@@ -12,7 +11,7 @@ public sealed class FileSystemTreeProvider(IFileSystemService fileSystemService)
     {
         if (string.IsNullOrWhiteSpace(folderPath) || !Directory.Exists(folderPath))
         {
-            return new ObservableCollection<FileSystemTreeNode>();
+            return [];
         }
 
         var rootEntry = new FileSystemEntry
@@ -25,7 +24,7 @@ public sealed class FileSystemTreeProvider(IFileSystemService fileSystemService)
         var rootNode = new FileSystemTreeNode(rootEntry);
         rootNode.Children.Add(new FileSystemTreeNode(new FileSystemEntry { Name = string.Empty, FullPath = string.Empty, IsFolder = true }));
 
-        return new ObservableCollection<FileSystemTreeNode> { rootNode };
+        return [.. new ObservableCollection<FileSystemTreeNode> { rootNode }];
     }
 
     public void LoadChildren(FileSystemTreeNode node)

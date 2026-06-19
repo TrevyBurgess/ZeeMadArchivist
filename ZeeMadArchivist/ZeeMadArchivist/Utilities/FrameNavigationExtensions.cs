@@ -7,15 +7,9 @@ public static class FrameNavigationExtensions
 {
     public static bool NavigateIfNotCurrent(this Frame frame, Type sourcePageType)
     {
-        if (frame is null)
-        {
-            throw new ArgumentNullException(nameof(frame));
-        }
+        ArgumentNullException.ThrowIfNull(frame);
 
-        if (sourcePageType is null)
-        {
-            throw new ArgumentNullException(nameof(sourcePageType));
-        }
+        ArgumentNullException.ThrowIfNull(sourcePageType);
 
         if (frame.CurrentSourcePageType == sourcePageType)
         {

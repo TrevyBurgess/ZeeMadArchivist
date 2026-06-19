@@ -1,5 +1,5 @@
 using CyberFeedForward.TheMadArchivist.Services;
-using CyberFeedForward.TheMadArchivist.AppTools.Graphics;
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
@@ -107,8 +107,9 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         {
             return new CustomIconsSettingsService(LocalAppSettingsStore.Instance);
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
             return new CustomIconsSettingsService(new InMemoryAppSettingsStore());
         }
     }
@@ -521,7 +522,7 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         void Start();
     }
 
-    private sealed class FileSystemCustomIconsFolderWatcher : ICustomIconsFolderWatcher
+    private sealed partial class FileSystemCustomIconsFolderWatcher : ICustomIconsFolderWatcher
     {
         private readonly FileSystemWatcher _watcher;
 
@@ -602,8 +603,9 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
                 return;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
             return;
         }
 
@@ -612,8 +614,9 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         {
             files = _enumerateFiles(folder);
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
             return;
         }
 
@@ -658,8 +661,9 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
                 return;
             }
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
         }
 
         try
@@ -671,8 +675,9 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
 
             _createDirectory(folderPath);
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
         }
     }
 
@@ -709,8 +714,9 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         {
             json = _readAllText(jsonFilePath);
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
             _suppressDirtyTracking = false;
             return;
         }
@@ -726,8 +732,9 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         {
             parsed = JsonSerializer.Deserialize<NamedIconControlFileModel>(json, DeserializeOptions);
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.TraceError(ex.ToString());
             _suppressDirtyTracking = false;
             return;
         }
@@ -862,7 +869,7 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
     }
 }
 
-public sealed class IconListItemViewModel : INotifyPropertyChanged
+public sealed partial class IconListItemViewModel : INotifyPropertyChanged
 {
     private string _name = string.Empty;
 
@@ -921,8 +928,9 @@ public sealed class IconListItemViewModel : INotifyPropertyChanged
             {
                 return new BitmapImage(new Uri(FilePath, UriKind.RelativeOrAbsolute));
             }
-            catch
+            catch (Exception ex)
             {
+                Trace.TraceError(ex.ToString());
                 return null;
             }
         }
@@ -967,8 +975,9 @@ public sealed partial class NamedIconRowViewModel(string? iconPath, string? text
             {
                 return new Uri(IconPath, UriKind.RelativeOrAbsolute);
             }
-            catch
+            catch (Exception ex)
             {
+                Trace.TraceError(ex.ToString());
                 return null;
             }
         }
@@ -987,8 +996,9 @@ public sealed partial class NamedIconRowViewModel(string? iconPath, string? text
             {
                 return new BitmapImage(new Uri(IconPath, UriKind.RelativeOrAbsolute));
             }
-            catch
+            catch (Exception ex)
             {
+                Trace.TraceError(ex.ToString());
                 return null;
             }
         }

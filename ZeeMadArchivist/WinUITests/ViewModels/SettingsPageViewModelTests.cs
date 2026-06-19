@@ -3,10 +3,9 @@ using CyberFeedForward.TheMadArchivist.ViewModels.Pages;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.VisualStudio.TestTools.UnitTesting.AppContainer;
 using System.Collections.Generic;
 
-namespace UnitTests.AA.ViewModels;
+namespace UnitTests.ViewModels;
 
 [TestClass]
 public sealed class SettingsPageViewModelTests

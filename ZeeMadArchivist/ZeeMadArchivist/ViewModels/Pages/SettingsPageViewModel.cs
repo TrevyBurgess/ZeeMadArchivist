@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Pages;
 
-public sealed class SettingsPageViewModel : INotifyPropertyChanged
+public sealed partial class SettingsPageViewModel : INotifyPropertyChanged
 {
     private const string SetStartupPreferenceKey = "Settings.SetStartup";
 
@@ -35,7 +35,7 @@ public sealed class SettingsPageViewModel : INotifyPropertyChanged
     {
     }
 
-    private static IAppSettingsStore CreateDefaultSettingsStore()
+    private static LocalAppSettingsStore CreateDefaultSettingsStore()
     {
         return LocalAppSettingsStore.Instance;
     }

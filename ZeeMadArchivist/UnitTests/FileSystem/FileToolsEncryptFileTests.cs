@@ -2,7 +2,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.IO;
 
-namespace UnitTests.Tools;
+namespace UnitTests.FileSystem;
 
 [TestClass]
 public sealed class FileToolsEncryptFileTests
@@ -12,7 +12,7 @@ public sealed class FileToolsEncryptFileTests
     {
         try
         {
-            global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FileTools.EncryptFile("", "out.bin");
+            global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.EncryptionTools.EncryptFile("", "out.bin");
             Assert.Fail("Expected ArgumentException was not thrown.");
         }
         catch (ArgumentException)
@@ -31,7 +31,7 @@ public sealed class FileToolsEncryptFileTests
 
             try
             {
-                global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FileTools.EncryptFile(inputPath, "");
+                global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.EncryptionTools.EncryptFile(inputPath, "");
                 Assert.Fail("Expected ArgumentException was not thrown.");
             }
             catch (ArgumentException)
@@ -52,7 +52,7 @@ public sealed class FileToolsEncryptFileTests
 
         try
         {
-            global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FileTools.EncryptFile(inputPath, outputPath);
+            global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.EncryptionTools.EncryptFile(inputPath, outputPath);
             Assert.Fail("Expected FileNotFoundException was not thrown.");
         }
         catch (FileNotFoundException)
@@ -68,12 +68,12 @@ public sealed class FileToolsEncryptFileTests
 
         try
         {
-            File.WriteAllBytes(inputPath, new byte[] { 1, 2, 3, 4, 5, 6, 7 });
+            File.WriteAllBytes(inputPath, [1, 2, 3, 4, 5, 6, 7]);
 
-            global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FileTools.EncryptFile(inputPath, outputPath);
+            global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.EncryptionTools.EncryptFile(inputPath, outputPath);
 
             Assert.IsTrue(File.Exists(outputPath));
-            Assert.IsTrue(new FileInfo(outputPath).Length > 0);
+            Assert.IsGreaterThan(0, new FileInfo(outputPath).Length);
 
             var encryptedBytes = File.ReadAllBytes(outputPath);
             CollectionAssert.AreNotEqual(File.ReadAllBytes(inputPath), encryptedBytes);

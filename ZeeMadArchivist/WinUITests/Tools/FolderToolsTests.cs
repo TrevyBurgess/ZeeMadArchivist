@@ -3,6 +3,7 @@ using System;
 using System.Drawing;
 using System.IO;
 using System.Diagnostics;
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 
 namespace UnitTests.Tools;
 
@@ -12,21 +13,21 @@ public sealed class FolderToolsTests
     [TestMethod]
     public void UpdateFolderIcon_WhenIconPathIsEmpty_ReturnsFalse()
     {
-        var result = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.UpdateFolderIcon(string.Empty, "C:\\");
+        var result = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.UpdateFolderIcon(string.Empty, "C:\\");
         Assert.IsFalse(result);
     }
 
     [TestMethod]
     public void UpdateFolderIcon_WhenFolderPathIsEmpty_ReturnsFalse()
     {
-        var result = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.UpdateFolderIcon("C:\\temp.ico", string.Empty);
+        var result = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.UpdateFolderIcon("C:\\temp.ico", string.Empty);
         Assert.IsFalse(result);
     }
 
     [TestMethod]
     public void UpdateFolderIcon_WhenPathsDoNotExist_ReturnsFalse()
     {
-        var result = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.UpdateFolderIcon("C:\\this-file-should-not-exist-12345.ico", "C:\\this-folder-should-not-exist-12345");
+        var result = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.UpdateFolderIcon("C:\\this-file-should-not-exist-12345.ico", "C:\\this-folder-should-not-exist-12345");
         Assert.IsFalse(result);
     }
 
@@ -46,7 +47,7 @@ public sealed class FolderToolsTests
                 icon.Save(fs);
             }
 
-            var result = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.UpdateFolderIcon(tempIcon, tempFolder);
+            var result = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.UpdateFolderIcon(tempIcon, tempFolder);
 
             Assert.IsTrue(result);
             Assert.IsTrue(File.Exists(Path.Combine(tempFolder, "desktop.ini")));
@@ -75,7 +76,7 @@ public sealed class FolderToolsTests
 
         try
         {
-            var copied = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.LoadDefaultIcons(destFolder, iconsFolderPath: sourceFolder);
+            var copied = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.LoadDefaultIcons(destFolder, iconsFolderPath: sourceFolder);
             Assert.AreEqual(0, copied);
         }
         finally
@@ -102,7 +103,7 @@ public sealed class FolderToolsTests
 
         try
         {
-            var copied = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.LoadDefaultIcons(destFolder, iconsFolderPath: sourceFolder);
+            var copied = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.LoadDefaultIcons(destFolder, iconsFolderPath: sourceFolder);
 
             Assert.AreEqual(2, copied);
             Assert.IsTrue(Directory.Exists(destFolder));
@@ -137,10 +138,10 @@ public sealed class FolderToolsTests
 
         try
         {
-            var copied = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.LoadDefaultIcons(destFolder, iconsFolderPath: sourceFolder);
+            var copied = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.LoadDefaultIcons(destFolder, iconsFolderPath: sourceFolder);
 
             Assert.AreEqual(1, copied);
-            CollectionAssert.AreEqual(new byte[] { 9, 9, 9 }, File.ReadAllBytes(existingDest));
+            CollectionAssert.AreEqual("\t\t\t"u8.ToArray(), File.ReadAllBytes(existingDest));
             Assert.IsTrue(File.Exists(Path.Combine(destFolder, "b.ico")));
         }
         finally
@@ -164,7 +165,7 @@ public sealed class FolderToolsTests
 
         try
         {
-            var ok = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.TryRenameIconFile(customIcons, original, "New", out var error);
+            var ok = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.TryRenameIconFile(customIcons, original, "New", out var error);
             Assert.IsTrue(ok);
             Assert.AreEqual(string.Empty, error);
             Assert.IsFalse(File.Exists(original));
@@ -193,11 +194,11 @@ public sealed class FolderToolsTests
 
         try
         {
-            var ok = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.TryRenameIconFile(customIcons, original, "New", out var error);
+            var ok = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.TryRenameIconFile(customIcons, original, "New", out var error);
             Assert.IsFalse(ok);
             Assert.AreNotEqual(string.Empty, error);
             Assert.IsTrue(File.Exists(original));
-            CollectionAssert.AreEqual(new byte[] { 9, 9, 9 }, File.ReadAllBytes(existing));
+            CollectionAssert.AreEqual("\t\t\t"u8.ToArray(), File.ReadAllBytes(existing));
         }
         finally
         {
@@ -220,7 +221,7 @@ public sealed class FolderToolsTests
 
         try
         {
-            var ok = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.TryRenameIconFile(customIcons, original, "New<", out var error);
+            var ok = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.TryRenameIconFile(customIcons, original, "New<", out var error);
             Assert.IsFalse(ok);
             Assert.AreNotEqual(string.Empty, error);
             Assert.IsTrue(File.Exists(original));
@@ -248,7 +249,7 @@ public sealed class FolderToolsTests
 
         try
         {
-            var ok = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.TryRenameIconFile(customIcons, original, "New", out var error);
+            var ok = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.TryRenameIconFile(customIcons, original, "New", out var error);
             Assert.IsFalse(ok);
             Assert.AreNotEqual(string.Empty, error);
             Assert.IsTrue(File.Exists(original));
@@ -265,7 +266,7 @@ public sealed class FolderToolsTests
     [TestMethod]
     public void TryOpenFolderInExplorer_WhenPathIsEmpty_ReturnsFalse()
     {
-        var ok = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.TryOpenFolderInExplorer(string.Empty, out var error);
+        var ok = global::CyberFeedForward.Tools.ZeeFileSystem.Utilities.FolderTools.TryOpenFolderInExplorer(string.Empty, out var error);
         Assert.IsFalse(ok);
         Assert.AreNotEqual(string.Empty, error);
     }
@@ -280,7 +281,7 @@ public sealed class FolderToolsTests
 
         try
         {
-            var ok = global::CyberFeedForward.TheMadArchivist.AppTools.FileSystem.FolderTools.TryOpenFolderInExplorer(
+            var ok = FolderTools.TryOpenFolderInExplorer(
                 baseFolder,
                 out var error,
                 processStart: psi =>
