@@ -1,12 +1,10 @@
 using CyberFeedForward.TheMadArchivist.Services;
-using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 using CyberFeedForward.TheMadArchivist.Views.Dialogs;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
-using System.IO;
 using System.Linq;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -244,50 +242,27 @@ public sealed partial class ArchiveListControl : UserControl
             return;
         }
 
-        try
+        var created = ViewModel.TryCreateNewArchive(folderPath, driveLetter.Value, out var errorMessage);
+        if (!string.IsNullOrWhiteSpace(errorMessage))
         {
-            var archiveName = new DirectoryInfo(folderPath).Name;
-            var mapResult = FolderTools.MapDrive(folderPath, driveLetter.Value, archiveName);
-            if (mapResult != 0)
-            {
-                throw FolderTools.CreateMapDriveException(mapResult, driveLetter.Value, folderPath);
-            }
-
-            if (!FolderTools.TrySetDefaultAppDriveIcon(driveLetter.Value, out var driveIconError))
-            {
-                throw new InvalidOperationException($"Failed to set mapped drive icon. {driveIconError}");
-            }
-
-            var addResult = ViewModel.TryAddFolderPath(folderPath, clearNewArchivePathOnSuccess: false);
-            if (addResult != ArchiveListControlViewModel.ArchiveAddResult.Added)
-            {
-                if (App.MainWindowInstance is MainWindow mainWindow)
-                {
-                    mainWindow.SetStatusText($"Archive not added: {folderPath}");
-                }
-            }
-            else
-            {
-                if (App.MainWindowInstance is MainWindow mainWindow)
-                {
-                    mainWindow.SetStatusText("New Archive Created");
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Trace.TraceError(ex.ToString());
+            System.Diagnostics.Trace.TraceError(errorMessage);
 
             var errorDialog = new ContentDialog
             {
                 Title = "New Archive Error",
-                Content = ex.Message,
+                Content = errorMessage,
                 CloseButtonText = "OK",
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = XamlRoot,
             };
 
             await errorDialog.ShowAsync();
+            return;
+        }
+
+        if (App.MainWindowInstance is MainWindow mainWindow)
+        {
+            mainWindow.SetStatusText(created ? "New Archive Created" : $"Archive not added: {folderPath}");
         }
     }
 }

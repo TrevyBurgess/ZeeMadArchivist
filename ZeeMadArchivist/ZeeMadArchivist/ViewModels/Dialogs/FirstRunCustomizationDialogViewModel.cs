@@ -7,19 +7,19 @@ using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Dialogs;
 
-public sealed partial class FirstRunCustomizationDialogViewModel(IAppSettingsStore settingsStore) : INotifyPropertyChanged
+public sealed partial class FirstRunCustomizationDialogViewModel : INotifyPropertyChanged
 {
     private const string SetStartupPreferenceKey = "Settings.SetStartup";
     private const string DefaultAppFolderName = "ZeeMadArchivist";
     private const string DefaultArchiveName = "Archive";
     private const string DefaultCustomIconsFolderName = "CustomIcons";
 
-    private readonly ThemeSettingsService _themeSettingsService = new(settingsStore);
-    private readonly CommandBarSettingsService _commandBarSettingsService = new(settingsStore);
-    private readonly StartupSettingsService _startupSettingsService = new();
-    private readonly ArchivesSettingsService _archivesSettingsService = new(settingsStore);
-    private readonly CustomIconsSettingsService _customIconsSettingsService = new(settingsStore);
-    private readonly IAppSettingsStore _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
+    private readonly ThemeSettingsService _themeSettingsService;
+    private readonly CommandBarSettingsService _commandBarSettingsService;
+    private readonly StartupSettingsService _startupSettingsService;
+    private readonly ArchivesSettingsService _archivesSettingsService;
+    private readonly CustomIconsSettingsService _customIconsSettingsService;
+    private readonly IAppSettingsStore _settingsStore;
 
     private string _title = string.Empty;
     private string _initialArchivePath = string.Empty;
@@ -151,6 +151,33 @@ public sealed partial class FirstRunCustomizationDialogViewModel(IAppSettingsSto
             _errorMessage = value;
             OnPropertyChanged();
         }
+    }
+
+    public FirstRunCustomizationDialogViewModel(IAppSettingsStore settingsStore)
+        : this(
+            settingsStore,
+            new ThemeSettingsService(settingsStore),
+            new CommandBarSettingsService(settingsStore),
+            new StartupSettingsService(),
+            new ArchivesSettingsService(settingsStore),
+            new CustomIconsSettingsService(settingsStore))
+    {
+    }
+
+    public FirstRunCustomizationDialogViewModel(
+        IAppSettingsStore settingsStore,
+        ThemeSettingsService themeSettingsService,
+        CommandBarSettingsService commandBarSettingsService,
+        StartupSettingsService startupSettingsService,
+        ArchivesSettingsService archivesSettingsService,
+        CustomIconsSettingsService customIconsSettingsService)
+    {
+        _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
+        _themeSettingsService = themeSettingsService ?? throw new ArgumentNullException(nameof(themeSettingsService));
+        _commandBarSettingsService = commandBarSettingsService ?? throw new ArgumentNullException(nameof(commandBarSettingsService));
+        _startupSettingsService = startupSettingsService ?? throw new ArgumentNullException(nameof(startupSettingsService));
+        _archivesSettingsService = archivesSettingsService ?? throw new ArgumentNullException(nameof(archivesSettingsService));
+        _customIconsSettingsService = customIconsSettingsService ?? throw new ArgumentNullException(nameof(customIconsSettingsService));
     }
 
     public void LoadDefaults()

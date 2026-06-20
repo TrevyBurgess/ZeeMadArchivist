@@ -1,5 +1,6 @@
 using CyberFeedForward.TheMadArchivist.Properties;
 using CyberFeedForward.TheMadArchivist.Services;
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -13,8 +14,13 @@ namespace CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 
 public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
 {
+    public delegate int MapDriveDelegate(string folderPath, char driveLetter, string name);
+    public delegate bool TrySetDriveIconDelegate(char driveLetter, out string errorMessage);
+
     private readonly ArchivesSettingsService _archivesSettingsService;
     private readonly Func<string, bool> _directoryExists;
+    private readonly MapDriveDelegate _mapDrive;
+    private readonly TrySetDriveIconDelegate _trySetDefaultAppDriveIcon;
     private string _newArchivePath = string.Empty;
     private string? _selectedArchive;
 
@@ -27,10 +33,16 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         Error,
     }
 
-    public ArchiveListControlViewModel(ArchivesSettingsService archivesSettingsService, Func<string, bool>? directoryExists = null)
+    public ArchiveListControlViewModel(
+        ArchivesSettingsService archivesSettingsService,
+        Func<string, bool>? directoryExists = null,
+        MapDriveDelegate? mapDrive = null,
+        TrySetDriveIconDelegate? trySetDefaultAppDriveIcon = null)
     {
         _archivesSettingsService = archivesSettingsService ?? throw new ArgumentNullException(nameof(archivesSettingsService));
         _directoryExists = directoryExists ?? Directory.Exists;
+        _mapDrive = mapDrive ?? FolderTools.MapDrive;
+        _trySetDefaultAppDriveIcon = trySetDefaultAppDriveIcon ?? FolderTools.TrySetDefaultAppDriveIcon;
 
         Archives = new ObservableCollection<string>(_archivesSettingsService.GetArchives());
         Archives.CollectionChanged += Archives_OnCollectionChanged;
@@ -93,6 +105,45 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
     {
         var result = TryAddFolderPath(NewArchivePath);
         return result == ArchiveAddResult.Added;
+    }
+
+    public bool TryCreateNewArchive(string folderPath, char driveLetter, out string? errorMessage)
+    {
+        errorMessage = null;
+
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            errorMessage = "The selected folder path is invalid.";
+            return false;
+        }
+
+        try
+        {
+            var archiveName = new DirectoryInfo(folderPath).Name;
+            var mapResult = _mapDrive(folderPath, driveLetter, archiveName);
+            if (mapResult != 0)
+            {
+                errorMessage = FolderTools.GetMapDriveErrorMessage(mapResult, driveLetter, folderPath);
+                Trace.TraceError($"MapDrive failed with code {mapResult}: {errorMessage}");
+                return false;
+            }
+
+            if (!_trySetDefaultAppDriveIcon(driveLetter, out var driveIconError))
+            {
+                errorMessage = $"Failed to set mapped drive icon. {driveIconError}";
+                Trace.TraceError(errorMessage);
+                return false;
+            }
+
+            var addResult = TryAddFolderPath(folderPath, clearNewArchivePathOnSuccess: false);
+            return addResult == ArchiveAddResult.Added;
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+            errorMessage = ex.Message;
+            return false;
+        }
     }
 
     public ArchiveAddResult TryAddFolderPath(string? folderPath, bool clearNewArchivePathOnSuccess = true)
