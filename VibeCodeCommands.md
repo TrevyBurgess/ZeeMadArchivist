@@ -36,9 +36,12 @@ Here are some the vibe code commands I used.
 - Remove the 'Add new tabs' button and 'Close Tab' buttons from SettingsGroups
 - Add NamedIconControl to IconsSettingsTab
 
-### 3.2.1. Settings - General
+### 3.2.1. Settings - General - Startup
 
 - Add a toggle to GeneralSettingsControl called SetStartup. If input parameter is true, app will start on system reboot. Set default to true.
+- Add a method to FirstRunService to delete all settings.
+
+
 - When a user tries to close the app, check if SetStartupToggleSwitch is set to true. If true, close window and let app run in the background. The first time, warn user app is running in the background. If false, close app
 - Add Open menu item to tray app menu. If app is closed, open it. If minimize, unminimize it
 - Remember state of SetStartupToggleSwitch when app closes

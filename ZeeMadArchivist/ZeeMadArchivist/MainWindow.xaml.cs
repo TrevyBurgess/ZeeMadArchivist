@@ -98,56 +98,32 @@ namespace CyberFeedForward.TheMadArchivist
                 return;
             }
 
-            bool shouldRunInBackground;
-            try
+            if (App.DialogShowing)
             {
-                shouldRunInBackground = _startupSettingsService.IsStartupEnabled();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.TraceError(ex.ToString());
-                throw;
-            }
+                args.Cancel = true;
 
-            if (!shouldRunInBackground)
-            {
                 return;
             }
 
-            args.Cancel = true;
+            if (_startupSettingsService.MinimizeToTray())
+            {
+                args.Cancel = true;
 
-            try
-            {
-                _appWindow.Hide();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.TraceError(ex.ToString());
-                throw;
-            }
-
-            try
-            {
-                if (!_backgroundCloseWarningService.ShouldShowWarning())
+                if (_backgroundCloseWarningService.ShouldShowWarning())
                 {
-                    return;
+                    var dialog = new ContentDialog
+                    {
+                        Title = "Running in the Background",
+                        Content = "ZeeMadArchivist is still running in the background. You can access it from the system tray icon. Use the tray icon menu to Exit completely.",
+                        CloseButtonText = "OK",
+                        XamlRoot = Content is FrameworkElement fe ? fe.XamlRoot : null,
+                    };
+
+                    await dialog.ShowAsync();
+                    _backgroundCloseWarningService.MarkWarned();
                 }
 
-                var dialog = new ContentDialog
-                {
-                    Title = "Running in the Background",
-                    Content = "ZeeMadArchivist is still running in the background. You can access it from the system tray icon. Use the tray icon menu to Exit completely.",
-                    CloseButtonText = "OK",
-                    XamlRoot = Content is FrameworkElement fe ? fe.XamlRoot : null,
-                };
-
-                await dialog.ShowAsync();
-                _backgroundCloseWarningService.MarkWarned();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Trace.TraceError(ex.ToString());
-                throw;
+                _appWindow.Hide();
             }
         }
 

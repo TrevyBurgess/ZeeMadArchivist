@@ -3,6 +3,7 @@ using CyberFeedForward.TheMadArchivist.Utilities;
 using CyberFeedForward.TheMadArchivist.Views.Dialogs;
 using Microsoft.UI.Xaml;
 using System;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -29,11 +30,13 @@ namespace CyberFeedForward.TheMadArchivist
             InitializeComponent();
         }
 
+        public static bool DialogShowing { get; set; }
+
         /// <summary>
         /// Invoked when the application is launched.
         /// </summary>
         /// <param name="args">Details about the launch request and process.</param>
-        protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
             _window = new MainWindow();
             MainWindowInstance = _window;
@@ -54,7 +57,7 @@ namespace CyberFeedForward.TheMadArchivist
             _trayIcon.Initialize();
         }
 
-        private async System.Threading.Tasks.Task RunFirstRunExperienceAsync()
+        private async Task RunFirstRunExperienceAsync()
         {
             if (_firstRunService is null || _window?.Content is not FrameworkElement rootElement)
             {
@@ -79,8 +82,12 @@ namespace CyberFeedForward.TheMadArchivist
                     XamlRoot = xamlRoot,
                 };
 
+                DialogShowing = true;
+
                 await dialog.ShowAsync();
                 _firstRunService.MarkFirstRunExperienceCompleted();
+
+                DialogShowing = false;
             }
             catch (Exception ex)
             {
@@ -88,7 +95,7 @@ namespace CyberFeedForward.TheMadArchivist
             }
         }
 
-        private static async System.Threading.Tasks.Task<XamlRoot?> GetXamlRootAsync(FrameworkElement rootElement)
+        private static async Task<XamlRoot?> GetXamlRootAsync(FrameworkElement rootElement)
         {
             if (rootElement.XamlRoot is not null)
             {

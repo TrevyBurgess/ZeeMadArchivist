@@ -73,7 +73,9 @@ public sealed partial class GeneralSettingsControl : UserControl
                 XamlRoot = XamlRoot,
             };
 
+            App.DialogShowing = true;
             await dialog.ShowAsync();
+            App.DialogShowing = false;
         }
         catch (Exception ex)
         {

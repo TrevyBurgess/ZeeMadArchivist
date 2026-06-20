@@ -5,16 +5,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:viewmodels="using:CyberFeedForward.TheMadArchivist.ViewModels.Pages"
+    xmlns:converters="using:CyberFeedForward.TheMadArchivist.Converters"
     mc:Ignorable="d"
     PrimaryButtonText="OK"
     DefaultButton="Primary">
 
     <ContentDialog.Resources>
-        <viewmodels:SettingsPageViewModel x:Key="ViewModel" />
+        <converters:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVisibilityConverter" />
     </ContentDialog.Resources>
 
-    <StackPanel x:Name="FirstRunCustomizationPanel" Spacing="16">
+    <StackPanel x:Name="FirstRunCustomizationPanel" Spacing="16" DataContext="{Binding ViewModel, ElementName=MainContent}">
         <TextBlock
             x:Name="FirstRunCustomizationDescriptionText"
             Text="Choose a few preferences before you start. You can change these later in Settings."
@@ -29,7 +29,8 @@
             <TextBox
                 x:Name="InitialArchivePathTextBox"
                 Header="Initial archive path"
-                PlaceholderText="C:\\Archives\\MyArchive" />
+                PlaceholderText="C:\\Archives\\MyArchive"
+                Text="{Binding InitialArchivePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <Button
                 x:Name="BrowseInitialArchivePathButton"
@@ -50,7 +51,8 @@
             <TextBox
                 x:Name="InitialCustomIconsPathTextBox"
                 Header="Initial custom icons path"
-                PlaceholderText="C:\\Archives\\CustomIcons" />
+                PlaceholderText="C:\\Archives\\CustomIcons"
+                Text="{Binding InitialCustomIconsPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <Button
                 x:Name="BrowseInitialCustomIconsPathButton"
@@ -76,18 +78,21 @@
             x:Name="CommandBarLocationToggleSwitch"
             Header="Navigation layout"
             OffContent="Command bar on the right"
-            OnContent="Command bar on the left" />
+            OnContent="Command bar on the left"
+            IsOn="{Binding IsCommandBarOnLeft, Mode=TwoWay}" />
 
         <ToggleSwitch
             x:Name="StartupToggleSwitch"
             Header="Launch at startup"
             OffContent="Do not launch when Windows starts"
-            OnContent="Launch when Windows starts" />
+            OnContent="Launch when Windows starts"
+            IsOn="{Binding SetStartup, Mode=TwoWay}" />
 
         <TextBlock
             x:Name="ErrorTextBlock"
             Foreground="Red"
             TextWrapping="Wrap"
-            Visibility="Collapsed" />
+            Text="{Binding ErrorMessage}"
+            Visibility="{Binding ErrorMessage, Converter={StaticResource NullOrEmptyToVisibilityConverter}}" />
     </StackPanel>
 </ContentDialog>

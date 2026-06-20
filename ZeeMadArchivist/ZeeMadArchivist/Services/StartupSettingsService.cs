@@ -19,7 +19,7 @@ public sealed class StartupSettingsService(
     private readonly Action<string> _writeRunValue = writeRunValue ?? WriteRunValue;
     private readonly Action _deleteRunValue = deleteRunValue ?? DeleteRunValue;
 
-    public bool IsStartupEnabled()
+    public bool MinimizeToTray()
     {
         try
         {

@@ -75,7 +75,7 @@ public sealed partial class SettingsPageViewModel : INotifyPropertyChanged
         try
         {
             _startupSettingsService.SetStartupEnabled(preferredStartupEnabled);
-            _setStartup = _startupSettingsService.IsStartupEnabled();
+            _setStartup = _startupSettingsService.MinimizeToTray();
             _settingsStore.SetBool(SetStartupPreferenceKey, _setStartup);
         }
         catch (Exception ex)
@@ -83,7 +83,7 @@ public sealed partial class SettingsPageViewModel : INotifyPropertyChanged
             System.Diagnostics.Trace.TraceError(ex.ToString());
             try
             {
-                _setStartup = _startupSettingsService.IsStartupEnabled();
+                _setStartup = _startupSettingsService.MinimizeToTray();
                 _settingsStore.SetBool(SetStartupPreferenceKey, _setStartup);
             }
             catch (Exception ex2)
@@ -142,7 +142,7 @@ public sealed partial class SettingsPageViewModel : INotifyPropertyChanged
         try
         {
             _startupSettingsService.SetStartupEnabled(enabled);
-            SetStartup = _startupSettingsService.IsStartupEnabled();
+            SetStartup = _startupSettingsService.MinimizeToTray();
             _settingsStore.SetBool(SetStartupPreferenceKey, SetStartup);
             return true;
         }
