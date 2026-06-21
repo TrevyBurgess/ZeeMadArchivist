@@ -1,6 +1,7 @@
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -417,17 +418,96 @@ public static partial class FolderTools
         }
 
         var localName = normalizedLetter + ":";
+        var trimmedPath = folderPath.Trim();
 
-        var nr = new NetResource
+        if (IsUncPath(trimmedPath))
         {
-            dwType = ResourceTypeDisk,
-            lpLocalName = localName,
-            lpRemoteName = folderPath,
-            lpProvider = null,
-            lpComment = name,
-        };
+            var nr = new NetResource
+            {
+                dwType = ResourceTypeDisk,
+                lpLocalName = localName,
+                lpRemoteName = folderPath,
+                lpProvider = null,
+                lpComment = name,
+            };
 
-        return WNetAddConnection2(ref nr, null, null, ConnectUpdateProfile);
+            return WNetAddConnection2(ref nr, null, null, ConnectUpdateProfile);
+        }
+
+        return MapLocalDrive(normalizedLetter, trimmedPath);
+    }
+
+    private static bool IsUncPath(string path)
+    {
+        return path.StartsWith("\\\\", StringComparison.Ordinal);
+    }
+
+    private static int MapLocalDrive(char driveLetter, string folderPath)
+    {
+        try
+        {
+            var fullPath = Path.GetFullPath(folderPath);
+            if (!fullPath.EndsWith(Path.DirectorySeparatorChar) && !fullPath.EndsWith(Path.AltDirectorySeparatorChar))
+            {
+                fullPath += Path.DirectorySeparatorChar;
+            }
+
+            if (!Directory.Exists(fullPath))
+            {
+                return Win32ErrorBadNetName;
+            }
+
+            return RunSubst($"{driveLetter}: \"{fullPath}\"");
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+            return Win32ErrorInvalidParameter;
+        }
+    }
+
+    private static int RunSubst(string arguments)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "subst.exe",
+                Arguments = arguments,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+
+            using var process = Process.Start(psi);
+            if (process is null)
+            {
+                return Win32ErrorInvalidParameter;
+            }
+
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            if (process.ExitCode == 0)
+            {
+                return 0;
+            }
+
+            if (!string.IsNullOrWhiteSpace(error) && error.Contains("in use", StringComparison.OrdinalIgnoreCase))
+            {
+                return Win32ErrorAlreadyAssigned;
+            }
+
+            Trace.TraceError($"subst.exe failed with exit code {process.ExitCode}. Output: {output}. Error: {error}.");
+            return Win32ErrorBadNetName;
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+            return Win32ErrorInvalidParameter;
+        }
     }
 
     public static string GetMapDriveErrorMessage(int errorCode, char driveLetter, string folderPath)
@@ -462,9 +542,132 @@ public static partial class FolderTools
         }
 
         var localName = normalizedLetter + ":";
-        var result = WNetCancelConnection2(localName, CancelUpdateProfile, true);
+        var wnetResult = WNetCancelConnection2(localName, CancelUpdateProfile, true);
+        if (wnetResult == 0)
+        {
+            return true;
+        }
 
-        return result == 0;
+        return RunSubst($"{localName} /D") == 0;
+    }
+
+    public static bool TryFindDriveLetterForPath(string path, out char driveLetter)
+    {
+        driveLetter = default;
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return false;
+        }
+
+        var normalizedPath = Path.GetFullPath(path.Trim());
+        if (!normalizedPath.EndsWith(Path.DirectorySeparatorChar) && !normalizedPath.EndsWith(Path.AltDirectorySeparatorChar))
+        {
+            normalizedPath += Path.DirectorySeparatorChar;
+        }
+
+        foreach (var mapping in GetSubstMappings())
+        {
+            if (!mapping.Path.EndsWith(Path.DirectorySeparatorChar) && !mapping.Path.EndsWith(Path.AltDirectorySeparatorChar))
+            {
+                if (string.Equals(normalizedPath, mapping.Path + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                {
+                    driveLetter = mapping.DriveLetter;
+                    return true;
+                }
+            }
+            else if (string.Equals(normalizedPath, mapping.Path, StringComparison.OrdinalIgnoreCase))
+            {
+                driveLetter = mapping.DriveLetter;
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool TryUnmapDriveForPath(string path)
+    {
+        if (TryFindDriveLetterForPath(path, out var driveLetter))
+        {
+            return UnmapDrive(driveLetter);
+        }
+
+        return true;
+    }
+
+    private static IEnumerable<(char DriveLetter, string Path)> GetSubstMappings()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "subst.exe",
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+            };
+
+            using var process = Process.Start(psi);
+            if (process is null)
+            {
+                return [];
+            }
+
+            var output = process.StandardOutput.ReadToEnd();
+            var error = process.StandardError.ReadToEnd();
+            process.WaitForExit();
+
+            if (!string.IsNullOrWhiteSpace(error))
+            {
+                Trace.TraceError($"subst.exe failed to list mappings. Error: {error}.");
+            }
+
+            return ParseSubstMappings(output);
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+            return [];
+        }
+    }
+
+    private static IEnumerable<(char DriveLetter, string Path)> ParseSubstMappings(string output)
+    {
+        if (string.IsNullOrWhiteSpace(output))
+        {
+            yield break;
+        }
+
+        const string Separator = ":\\: => ";
+        foreach (var line in output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmedLine = line.Trim();
+            if (trimmedLine.Length < Separator.Length + 1)
+            {
+                continue;
+            }
+
+            var separatorIndex = trimmedLine.IndexOf(Separator, StringComparison.Ordinal);
+            if (separatorIndex < 0)
+            {
+                continue;
+            }
+
+            var driveLetter = trimmedLine[0];
+            if (driveLetter is < 'A' or > 'Z' and < 'a' or > 'z')
+            {
+                continue;
+            }
+
+            var mappedPath = trimmedLine.Substring(separatorIndex + Separator.Length).Trim();
+            if (string.IsNullOrWhiteSpace(mappedPath))
+            {
+                continue;
+            }
+
+            yield return (char.ToUpperInvariant(driveLetter), mappedPath);
+        }
     }
 
     private const int Win32ErrorInvalidParameter = 87;

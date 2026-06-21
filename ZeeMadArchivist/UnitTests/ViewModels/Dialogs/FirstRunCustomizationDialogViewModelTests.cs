@@ -61,7 +61,11 @@ public sealed class FirstRunCustomizationDialogViewModelTests
         }
     }
 
-    private static FirstRunCustomizationDialogViewModel CreateViewModel(IAppSettingsStore? store = null)
+    private static FirstRunCustomizationDialogViewModel CreateViewModel(
+        IAppSettingsStore? store = null,
+        FirstRunCustomizationDialogViewModel.GetUnusedDriveLettersDelegate? getUnusedDriveLetters = null,
+        FirstRunCustomizationDialogViewModel.MapDriveDelegate? mapDrive = null,
+        FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null)
     {
         store ??= new FakeAppSettingsStore();
         return new FirstRunCustomizationDialogViewModel(
@@ -74,7 +78,14 @@ public sealed class FirstRunCustomizationDialogViewModelTests
                 writeRunValue: _ => { },
                 deleteRunValue: () => { }),
             new ArchivesSettingsService(store),
-            new CustomIconsSettingsService(store));
+            new CustomIconsSettingsService(store),
+            getUnusedDriveLetters ?? (() => new[] { 'Z', 'Y' }),
+            mapDrive ?? ((path, letter, name) => 0),
+            trySetDriveIcon ?? ((char letter, string iconPath, out string error) =>
+            {
+                error = null!;
+                return true;
+            }));
     }
 
     [TestMethod]
@@ -91,7 +102,12 @@ public sealed class FirstRunCustomizationDialogViewModelTests
         Assert.IsTrue(viewModel.SetStartup);
         Assert.IsFalse(string.IsNullOrWhiteSpace(viewModel.InitialArchivePath));
         Assert.IsFalse(string.IsNullOrWhiteSpace(viewModel.InitialCustomIconsPath));
+        Assert.AreEqual("Archive", viewModel.ArchiveName);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(viewModel.SelectedIconPath));
         Assert.IsNull(viewModel.ErrorMessage);
+        Assert.AreEqual(2, viewModel.AvailableDriveLetters.Count);
+        Assert.AreEqual("Z:", viewModel.AvailableDriveLetters[0]);
+        Assert.AreEqual("Z:", viewModel.SelectedDriveLetter);
     }
 
     [TestMethod]
@@ -133,7 +149,8 @@ public sealed class FirstRunCustomizationDialogViewModelTests
         viewModel.ThemeModeIndex = 2;
         viewModel.IsCommandBarOnLeft = false;
         viewModel.SetStartup = false;
-        viewModel.InitialArchivePath = "C:\\Temp\\Archive";
+        viewModel.InitialArchivePath = "C:\\Temp";
+        viewModel.ArchiveName = "Archive";
         viewModel.InitialCustomIconsPath = "C:\\Temp\\Icons";
 
         var result = viewModel.TrySave();
@@ -151,12 +168,31 @@ public sealed class FirstRunCustomizationDialogViewModelTests
     }
 
     [TestMethod]
+    public void TrySave_AppendsInitialArchivePathToExistingArchives()
+    {
+        var store = new FakeAppSettingsStore();
+        store.SetString("Archives.Paths", "[\"C:\\\\Temp\\\\ExistingArchive\"]");
+        var viewModel = CreateViewModel(store);
+        viewModel.LoadDefaults();
+        viewModel.InitialArchivePath = "C:\\Temp";
+        viewModel.ArchiveName = "NewArchive";
+
+        var result = viewModel.TrySave();
+
+        Assert.IsTrue(result);
+        Assert.IsTrue(store.TryGetString("Archives.Paths", out var archivesJson));
+        Assert.IsTrue(archivesJson.Contains("ExistingArchive", StringComparison.OrdinalIgnoreCase));
+        Assert.IsTrue(archivesJson.Contains("NewArchive", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
     public void TrySave_WhenEmptyPaths_DoesNotPersistEmptyPaths()
     {
         var store = new FakeAppSettingsStore();
         var viewModel = CreateViewModel(store);
         viewModel.LoadDefaults();
         viewModel.InitialArchivePath = "   ";
+        viewModel.ArchiveName = "   ";
         viewModel.InitialCustomIconsPath = "   ";
 
         var result = viewModel.TrySave();
@@ -196,7 +232,7 @@ public sealed class FirstRunCustomizationDialogViewModelTests
         var path = FirstRunCustomizationDialogViewModel.GetDefaultArchivePath();
 
         Assert.IsFalse(string.IsNullOrWhiteSpace(path));
-        Assert.IsTrue(path.EndsWith("Archive", StringComparison.OrdinalIgnoreCase));
+        Assert.IsTrue(path.EndsWith("ZeeMadArchivist", StringComparison.OrdinalIgnoreCase));
     }
 
     [TestMethod]
@@ -206,5 +242,84 @@ public sealed class FirstRunCustomizationDialogViewModelTests
 
         Assert.IsFalse(string.IsNullOrWhiteSpace(path));
         Assert.IsTrue(path.EndsWith("CustomIcons", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public void TrySave_WhenMapDriveFails_SetsErrorMessage()
+    {
+        var store = new FakeAppSettingsStore();
+        var viewModel = CreateViewModel(
+            store,
+            mapDrive: (path, letter, name) => 85);
+        viewModel.LoadDefaults();
+        viewModel.InitialArchivePath = "C:\\Temp";
+        viewModel.ArchiveName = "Archive";
+
+        var result = viewModel.TrySave();
+
+        Assert.IsFalse(result);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(viewModel.ErrorMessage));
+    }
+
+    [TestMethod]
+    public void TrySave_WhenSetDriveIconFails_SetsErrorMessage()
+    {
+        var store = new FakeAppSettingsStore();
+        var viewModel = CreateViewModel(
+            store,
+            trySetDriveIcon: (char letter, string iconPath, out string error) =>
+            {
+                error = "Icon file missing";
+                return false;
+            });
+        viewModel.LoadDefaults();
+        viewModel.InitialArchivePath = "C:\\Temp";
+        viewModel.ArchiveName = "Archive";
+
+        var result = viewModel.TrySave();
+
+        Assert.IsFalse(result);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(viewModel.ErrorMessage));
+        Assert.IsTrue(viewModel.ErrorMessage.Contains("Icon file missing", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public void TrySave_WhenDriveLetterSelected_MapsDriveAndSetsIcon()
+    {
+        char mappedLetter = default;
+        string? mappedPath = null;
+        string? mappedName = null;
+        char iconLetter = default;
+        string? iconPath = null;
+        var store = new FakeAppSettingsStore();
+        var viewModel = CreateViewModel(
+            store,
+            mapDrive: (path, letter, name) =>
+            {
+                mappedPath = path;
+                mappedLetter = letter;
+                mappedName = name;
+                return 0;
+            },
+            trySetDriveIcon: (char letter, string path, out string error) =>
+            {
+                iconLetter = letter;
+                iconPath = path;
+                error = null!;
+                return true;
+            });
+        viewModel.LoadDefaults();
+        viewModel.InitialArchivePath = "C:\\Temp";
+        viewModel.ArchiveName = "Archive";
+        viewModel.SelectedDriveLetter = "Z:";
+
+        var result = viewModel.TrySave();
+
+        Assert.IsTrue(result);
+        Assert.AreEqual('Z', mappedLetter);
+        Assert.AreEqual('Z', iconLetter);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(mappedPath));
+        Assert.AreEqual("Archive", mappedName);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(iconPath));
     }
 }

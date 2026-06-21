@@ -28,8 +28,8 @@
 
             <TextBox
                 x:Name="InitialArchivePathTextBox"
-                Header="Initial archive path"
-                PlaceholderText="C:\\Archives\\MyArchive"
+                Header="Archive folder"
+                PlaceholderText="C:\\Archives"
                 Text="{Binding InitialArchivePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
             <Button
@@ -39,6 +39,40 @@
                 Click="BrowseInitialArchivePathButton_OnClick"
                 >
                 <SymbolIcon Symbol="NewFolder" />
+            </Button>
+        </Grid>
+
+        <TextBox
+            x:Name="ArchiveNameTextBox"
+            Header="Archive name"
+            PlaceholderText="MyArchive"
+            Text="{Binding ArchiveName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+        <ComboBox
+            x:Name="DriveLetterComboBox"
+            Header="Drive letter"
+            ItemsSource="{Binding AvailableDriveLetters}"
+            SelectedItem="{Binding SelectedDriveLetter, Mode=TwoWay}" />
+
+        <Grid x:Name="InitialIconPathSelectionGrid" ColumnSpacing="8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <TextBox
+                x:Name="InitialIconPathTextBox"
+                Header="Drive icon"
+                PlaceholderText="AppIcon.ico"
+                Text="{Binding SelectedIconPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+            <Button
+                x:Name="BrowseInitialIconPathButton"
+                Grid.Column="1"
+                VerticalAlignment="Bottom"
+                Click="BrowseInitialIconPathButton_OnClick"
+                >
+                <SymbolIcon Symbol="OpenFile" />
             </Button>
         </Grid>
 

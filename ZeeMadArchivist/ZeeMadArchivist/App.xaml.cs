@@ -87,6 +87,8 @@ namespace CyberFeedForward.TheMadArchivist
                 await dialog.ShowAsync();
                 _firstRunService.MarkFirstRunExperienceCompleted();
 
+                (MainWindowInstance as MainWindow)?.ReloadArchives();
+
                 DialogShowing = false;
             }
             catch (Exception ex)

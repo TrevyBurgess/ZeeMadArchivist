@@ -1,3 +1,4 @@
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -30,10 +31,17 @@ public sealed partial class NewArchiveDialog : ContentDialog
             DriveLetterComboBox.SelectedIndex = 0;
         }
 
+        var defaultIconPath = FolderTools.GetDefaultAppIconPath() ?? string.Empty;
+        IconPathTextBox.Text = defaultIconPath;
+
         PrimaryButtonClick += NewArchiveDialog_OnPrimaryButtonClick;
     }
 
     public string FolderPath => FolderPathTextBox.Text?.Trim() ?? string.Empty;
+
+    public string ArchiveName => ArchiveNameTextBox.Text?.Trim() ?? string.Empty;
+
+    public string IconPath => IconPathTextBox.Text?.Trim() ?? string.Empty;
 
     private async void BrowseFolderButton_OnClick(object sender, RoutedEventArgs e)
     {
@@ -65,6 +73,43 @@ public sealed partial class NewArchiveDialog : ContentDialog
         }
 
         FolderPathTextBox.Text = folder.Path;
+        ArchiveNameTextBox.Text = folder.Name;
+
+        HideError();
+    }
+
+    private async void BrowseIconButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileOpenPicker();
+        picker.ViewMode = PickerViewMode.Thumbnail;
+        picker.SuggestedStartLocation = PickerLocationId.ComputerFolder;
+        picker.FileTypeFilter.Add(".ico");
+
+        if (App.MainWindowInstance is null)
+        {
+            return;
+        }
+
+        var hwnd = WindowNative.GetWindowHandle(App.MainWindowInstance);
+        InitializeWithWindow.Initialize(picker, hwnd);
+
+        StorageFile? file;
+        try
+        {
+            file = await picker.PickSingleFileAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Trace.TraceError(ex.ToString());
+            return;
+        }
+
+        if (file is null)
+        {
+            return;
+        }
+
+        IconPathTextBox.Text = file.Path;
         HideError();
     }
 
@@ -107,6 +152,27 @@ public sealed partial class NewArchiveDialog : ContentDialog
         if (SelectedDriveLetter is null)
         {
             ShowError("Drive letter is required.");
+            args.Cancel = true;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(ArchiveName))
+        {
+            ShowError("Archive name is required.");
+            args.Cancel = true;
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(IconPath))
+        {
+            ShowError("Icon path is required.");
+            args.Cancel = true;
+            return;
+        }
+
+        if (!File.Exists(IconPath))
+        {
+            ShowError("Icon file does not exist.");
             args.Cancel = true;
             return;
         }

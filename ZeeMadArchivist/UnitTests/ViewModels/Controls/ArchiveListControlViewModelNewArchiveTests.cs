@@ -1,13 +1,17 @@
 using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.ViewModels.Controls;
+using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace UnitTests.ViewModels.Controls;
 
 [TestClass]
 public sealed class ArchiveListControlViewModelNewArchiveTests
 {
+    private static readonly string TestIconPath = FolderTools.GetDefaultAppIconPath() ?? "C:\\AppIcon.ico";
+
     private sealed class FakeAppSettingsStore : IAppSettingsStore
     {
         private readonly Dictionary<string, bool> _boolValues = [];
@@ -56,14 +60,16 @@ public sealed class ArchiveListControlViewModelNewArchiveTests
     private static ArchiveListControlViewModel CreateViewModel(
         IAppSettingsStore? store = null,
         ArchiveListControlViewModel.MapDriveDelegate? mapDrive = null,
-        ArchiveListControlViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null)
+        ArchiveListControlViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null,
+        ArchiveListControlViewModel.UnmapDriveForPathDelegate? unmapDriveForPath = null)
     {
         store ??= new FakeAppSettingsStore();
         return new ArchiveListControlViewModel(
             new ArchivesSettingsService(store),
             _ => true,
             mapDrive,
-            trySetDriveIcon);
+            trySetDriveIcon,
+            unmapDriveForPath ?? (_ => true));
     }
 
     [TestMethod]
@@ -73,17 +79,17 @@ public sealed class ArchiveListControlViewModelNewArchiveTests
         var vm = CreateViewModel(
             store,
             (path, letter, name) => 0,
-            (char letter, out string error) =>
+            (char letter, string iconPath, out string error) =>
             {
                 error = null!;
                 return true;
             });
 
-        var result = vm.TryCreateNewArchive("C:\\Temp\\Archive1", 'Z', out var errorMessage);
+        var result = vm.TryCreateNewArchive("C:\\Temp", "Archive1", 'Z', TestIconPath, out var errorMessage);
 
         Assert.IsTrue(result);
         Assert.IsNull(errorMessage);
-        Assert.IsTrue(vm.Archives.Contains("C:\\Temp\\Archive1"));
+        Assert.IsTrue(vm.Archives.Any(a => string.Equals(a.Path, "C:\\Temp\\Archive1", System.StringComparison.OrdinalIgnoreCase)));
         Assert.IsTrue(store.TryGetString("Archives.Paths", out var stored));
         Assert.IsTrue(stored.Contains("Archive1", System.StringComparison.OrdinalIgnoreCase));
     }
@@ -93,13 +99,13 @@ public sealed class ArchiveListControlViewModelNewArchiveTests
     {
         var vm = CreateViewModel(
             mapDrive: (path, letter, name) => 85,
-            trySetDriveIcon: (char letter, out string error) =>
+            trySetDriveIcon: (char letter, string iconPath, out string error) =>
             {
                 error = null!;
                 return true;
             });
 
-        var result = vm.TryCreateNewArchive("C:\\Temp\\Archive1", 'Z', out var errorMessage);
+        var result = vm.TryCreateNewArchive("C:\\Temp", "Archive1", 'Z', TestIconPath, out var errorMessage);
 
         Assert.IsFalse(result);
         Assert.IsFalse(string.IsNullOrWhiteSpace(errorMessage));
@@ -110,13 +116,13 @@ public sealed class ArchiveListControlViewModelNewArchiveTests
     {
         var vm = CreateViewModel(
             mapDrive: (path, letter, name) => 0,
-            trySetDriveIcon: (char letter, out string error) =>
+            trySetDriveIcon: (char letter, string iconPath, out string error) =>
             {
                 error = "Icon file missing";
                 return false;
             });
 
-        var result = vm.TryCreateNewArchive("C:\\Temp\\Archive1", 'Z', out var errorMessage);
+        var result = vm.TryCreateNewArchive("C:\\Temp", "Archive1", 'Z', TestIconPath, out var errorMessage);
 
         Assert.IsFalse(result);
         Assert.IsFalse(string.IsNullOrWhiteSpace(errorMessage));
@@ -128,14 +134,14 @@ public sealed class ArchiveListControlViewModelNewArchiveTests
     {
         var vm = CreateViewModel(
             mapDrive: (path, letter, name) => 0,
-            trySetDriveIcon: (char letter, out string error) =>
+            trySetDriveIcon: (char letter, string iconPath, out string error) =>
             {
                 error = null!;
                 return true;
             });
 
-        vm.TryCreateNewArchive("C:\\Temp\\Archive1", 'Z', out _);
-        var result = vm.TryCreateNewArchive("C:\\Temp\\Archive1", 'Y', out var errorMessage);
+        vm.TryCreateNewArchive("C:\\Temp", "Archive1", 'Z', TestIconPath, out _);
+        var result = vm.TryCreateNewArchive("C:\\Temp", "Archive1", 'Y', TestIconPath, out var errorMessage);
 
         Assert.IsFalse(result);
         Assert.IsNull(errorMessage);
@@ -146,13 +152,47 @@ public sealed class ArchiveListControlViewModelNewArchiveTests
     {
         var vm = CreateViewModel(
             mapDrive: (path, letter, name) => 0,
-            trySetDriveIcon: (char letter, out string error) =>
+            trySetDriveIcon: (char letter, string iconPath, out string error) =>
             {
                 error = null!;
                 return true;
             });
 
-        var result = vm.TryCreateNewArchive("   ", 'Z', out var errorMessage);
+        var result = vm.TryCreateNewArchive("   ", "Archive1", 'Z', TestIconPath, out var errorMessage);
+
+        Assert.IsFalse(result);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(errorMessage));
+    }
+
+    [TestMethod]
+    public void TryCreateNewArchive_WhenArchiveNameIsEmpty_ReturnsFalseWithError()
+    {
+        var vm = CreateViewModel(
+            mapDrive: (path, letter, name) => 0,
+            trySetDriveIcon: (char letter, string iconPath, out string error) =>
+            {
+                error = null!;
+                return true;
+            });
+
+        var result = vm.TryCreateNewArchive("C:\\Temp", "   ", 'Z', TestIconPath, out var errorMessage);
+
+        Assert.IsFalse(result);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(errorMessage));
+    }
+
+    [TestMethod]
+    public void TryCreateNewArchive_WhenIconPathIsEmpty_ReturnsFalseWithError()
+    {
+        var vm = CreateViewModel(
+            mapDrive: (path, letter, name) => 0,
+            trySetDriveIcon: (char letter, string iconPath, out string error) =>
+            {
+                error = null!;
+                return true;
+            });
+
+        var result = vm.TryCreateNewArchive("C:\\Temp", "Archive1", 'Z', "   ", out var errorMessage);
 
         Assert.IsFalse(result);
         Assert.IsFalse(string.IsNullOrWhiteSpace(errorMessage));
@@ -163,16 +203,30 @@ public sealed class ArchiveListControlViewModelNewArchiveTests
     {
         var vm = CreateViewModel(
             mapDrive: (path, letter, name) => throw new System.InvalidOperationException("Drive mapping unavailable"),
-            trySetDriveIcon: (char letter, out string error) =>
+            trySetDriveIcon: (char letter, string iconPath, out string error) =>
             {
                 error = null!;
                 return true;
             });
 
-        var result = vm.TryCreateNewArchive("C:\\Temp\\Archive1", 'Z', out var errorMessage);
+        var result = vm.TryCreateNewArchive("C:\\Temp", "Archive1", 'Z', TestIconPath, out var errorMessage);
 
         Assert.IsFalse(result);
         Assert.IsFalse(string.IsNullOrWhiteSpace(errorMessage));
         Assert.IsTrue(errorMessage.Contains("Drive mapping unavailable", System.StringComparison.OrdinalIgnoreCase));
+    }
+
+    [TestMethod]
+    public void ReloadArchives_LoadsArchivesFromSettings()
+    {
+        var store = new FakeAppSettingsStore();
+        store.SetString("Archives.Paths", "[\"C:\\\\Temp\\\\Archive1\", \"C:\\\\Temp\\\\Archive2\"]");
+        var vm = CreateViewModel(store);
+
+        vm.ReloadArchives();
+
+        Assert.HasCount(2, vm.Archives);
+        Assert.IsTrue(vm.Archives.Any(a => string.Equals(a.Path, "C:\\Temp\\Archive1", System.StringComparison.OrdinalIgnoreCase)));
+        Assert.IsTrue(vm.Archives.Any(a => string.Equals(a.Path, "C:\\Temp\\Archive2", System.StringComparison.OrdinalIgnoreCase)));
     }
 }

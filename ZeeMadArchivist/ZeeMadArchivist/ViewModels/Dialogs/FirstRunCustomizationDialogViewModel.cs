@@ -1,14 +1,21 @@
 using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Dialogs;
 
 public sealed partial class FirstRunCustomizationDialogViewModel : INotifyPropertyChanged
 {
+    public delegate IEnumerable<char> GetUnusedDriveLettersDelegate();
+    public delegate int MapDriveDelegate(string folderPath, char driveLetter, string name);
+    public delegate bool TrySetDriveIconDelegate(char driveLetter, string iconPath, out string errorMessage);
+
     private const string SetStartupPreferenceKey = "Settings.SetStartup";
     private const string DefaultAppFolderName = "ZeeMadArchivist";
     private const string DefaultArchiveName = "Archive";
@@ -20,14 +27,22 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
     private readonly ArchivesSettingsService _archivesSettingsService;
     private readonly CustomIconsSettingsService _customIconsSettingsService;
     private readonly IAppSettingsStore _settingsStore;
+    private readonly GetUnusedDriveLettersDelegate _getUnusedDriveLetters;
+    private readonly MapDriveDelegate _mapDrive;
+    private readonly TrySetDriveIconDelegate _trySetDriveIcon;
 
     private string _title = string.Empty;
     private string _initialArchivePath = string.Empty;
     private string _initialCustomIconsPath = string.Empty;
+    private string _archiveName = string.Empty;
+    private string _selectedIconPath = string.Empty;
     private int _themeModeIndex;
     private bool _isCommandBarOnLeft;
     private bool _setStartup;
     private string? _errorMessage;
+    private string? _selectedDriveLetter;
+
+    public ObservableCollection<string> AvailableDriveLetters { get; } = [];
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -57,6 +72,36 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
             }
 
             _initialArchivePath = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string ArchiveName
+    {
+        get => _archiveName;
+        set
+        {
+            if (_archiveName == value)
+            {
+                return;
+            }
+
+            _archiveName = value;
+            OnPropertyChanged();
+        }
+    }
+
+    public string SelectedIconPath
+    {
+        get => _selectedIconPath;
+        set
+        {
+            if (_selectedIconPath == value)
+            {
+                return;
+            }
+
+            _selectedIconPath = value;
             OnPropertyChanged();
         }
     }
@@ -153,6 +198,21 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
         }
     }
 
+    public string? SelectedDriveLetter
+    {
+        get => _selectedDriveLetter;
+        set
+        {
+            if (_selectedDriveLetter == value)
+            {
+                return;
+            }
+
+            _selectedDriveLetter = value;
+            OnPropertyChanged();
+        }
+    }
+
     public FirstRunCustomizationDialogViewModel(IAppSettingsStore settingsStore)
         : this(
             settingsStore,
@@ -160,7 +220,10 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
             new CommandBarSettingsService(settingsStore),
             new StartupSettingsService(),
             new ArchivesSettingsService(settingsStore),
-            new CustomIconsSettingsService(settingsStore))
+            new CustomIconsSettingsService(settingsStore),
+            GetUnusedDriveLetters,
+            FolderTools.MapDrive,
+            FolderTools.TrySetDriveIcon)
     {
     }
 
@@ -170,7 +233,10 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
         CommandBarSettingsService commandBarSettingsService,
         StartupSettingsService startupSettingsService,
         ArchivesSettingsService archivesSettingsService,
-        CustomIconsSettingsService customIconsSettingsService)
+        CustomIconsSettingsService customIconsSettingsService,
+        GetUnusedDriveLettersDelegate? getUnusedDriveLetters = null,
+        MapDriveDelegate? mapDrive = null,
+        TrySetDriveIconDelegate? trySetDriveIcon = null)
     {
         _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
         _themeSettingsService = themeSettingsService ?? throw new ArgumentNullException(nameof(themeSettingsService));
@@ -178,6 +244,9 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
         _startupSettingsService = startupSettingsService ?? throw new ArgumentNullException(nameof(startupSettingsService));
         _archivesSettingsService = archivesSettingsService ?? throw new ArgumentNullException(nameof(archivesSettingsService));
         _customIconsSettingsService = customIconsSettingsService ?? throw new ArgumentNullException(nameof(customIconsSettingsService));
+        _getUnusedDriveLetters = getUnusedDriveLetters ?? GetUnusedDriveLetters;
+        _mapDrive = mapDrive ?? FolderTools.MapDrive;
+        _trySetDriveIcon = trySetDriveIcon ?? FolderTools.TrySetDriveIcon;
     }
 
     public void LoadDefaults()
@@ -185,10 +254,32 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
         Title = "Welcome to The Mad Archivist!";
         ThemeModeIndex = 0;
         IsCommandBarOnLeft = true;
+        ArchiveName = DefaultArchiveName;
         InitialArchivePath = GetDefaultArchivePath();
         InitialCustomIconsPath = GetDefaultCustomIconsPath();
+        SelectedIconPath = FolderTools.GetDefaultAppIconPath() ?? string.Empty;
         SetStartup = true;
         ErrorMessage = null;
+        SelectedDriveLetter = null;
+        LoadDriveLetters();
+    }
+
+    public void LoadDriveLetters()
+    {
+        AvailableDriveLetters.Clear();
+        foreach (var letter in _getUnusedDriveLetters())
+        {
+            AvailableDriveLetters.Add(letter + ":");
+        }
+
+        if (AvailableDriveLetters.Count > 0)
+        {
+            SelectedDriveLetter = AvailableDriveLetters[0];
+        }
+        else
+        {
+            SelectedDriveLetter = null;
+        }
     }
 
     public bool TrySave()
@@ -221,9 +312,34 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
         _settingsStore.SetBool(SetStartupPreferenceKey, SetStartup);
 
         var initialArchivePath = InitialArchivePath?.Trim() ?? string.Empty;
-        if (!string.IsNullOrWhiteSpace(initialArchivePath))
+        var archiveName = ArchiveName?.Trim() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(initialArchivePath) && !string.IsNullOrWhiteSpace(archiveName))
         {
-            _archivesSettingsService.SaveArchives([Path.GetFullPath(initialArchivePath)]);
+            var fullArchivePath = Path.GetFullPath(Path.Combine(initialArchivePath, archiveName));
+            var existingArchives = _archivesSettingsService.GetArchives();
+            _archivesSettingsService.SaveArchives(existingArchives.Concat([fullArchivePath]));
+
+            Directory.CreateDirectory(fullArchivePath);
+
+            if (TryParseSelectedDriveLetter(out var driveLetter))
+            {
+                var mapResult = _mapDrive(fullArchivePath, driveLetter, archiveName);
+                if (mapResult != 0)
+                {
+                    throw FolderTools.CreateMapDriveException(mapResult, driveLetter, fullArchivePath);
+                }
+
+                var iconPath = SelectedIconPath?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(iconPath) || !File.Exists(iconPath))
+                {
+                    throw new InvalidOperationException($"Icon file does not exist. {iconPath}");
+                }
+
+                if (!_trySetDriveIcon(driveLetter, iconPath, out var driveIconError))
+                {
+                    throw new InvalidOperationException($"Failed to set mapped drive icon. {driveIconError}");
+                }
+            }
         }
 
         var initialCustomIconsPath = InitialCustomIconsPath?.Trim() ?? string.Empty;
@@ -235,9 +351,33 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
         }
     }
 
+    private bool TryParseSelectedDriveLetter(out char driveLetter)
+    {
+        driveLetter = default;
+        if (string.IsNullOrWhiteSpace(SelectedDriveLetter))
+        {
+            return false;
+        }
+
+        var trimmed = SelectedDriveLetter.Trim();
+        if (trimmed.Length < 1)
+        {
+            return false;
+        }
+
+        var letter = char.ToUpperInvariant(trimmed[0]);
+        if (letter is < 'A' or > 'Z')
+        {
+            return false;
+        }
+
+        driveLetter = letter;
+        return true;
+    }
+
     public static string GetDefaultArchivePath()
     {
-        return Path.Combine(GetDefaultAppFolderPath(), DefaultArchiveName);
+        return GetDefaultAppFolderPath();
     }
 
     public static string GetDefaultCustomIconsPath()
@@ -254,6 +394,38 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
         }
 
         return Path.Combine(documentsPath, DefaultAppFolderName);
+    }
+
+    public static IEnumerable<char> GetUnusedDriveLetters()
+    {
+        var used = DriveInfo.GetDrives()
+            .Select(d => char.ToUpperInvariant(d.Name[0]))
+            .Where(c => c is >= 'A' and <= 'Z');
+
+        return GetUnusedDriveLetters(used);
+    }
+
+    public static IEnumerable<char> GetUnusedDriveLetters(IEnumerable<char> usedDriveLetters, char startLetter = 'D')
+    {
+        ArgumentNullException.ThrowIfNull(usedDriveLetters);
+
+        var used = new HashSet<char>(usedDriveLetters
+            .Select(char.ToUpperInvariant)
+            .Where(c => c is >= 'A' and <= 'Z'));
+
+        var start = char.ToUpperInvariant(startLetter);
+        if (start is < 'A' or > 'Z')
+        {
+            throw new ArgumentOutOfRangeException(nameof(startLetter));
+        }
+
+        for (var c = start; c <= 'Z'; c++)
+        {
+            if (!used.Contains(c))
+            {
+                yield return c;
+            }
+        }
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

@@ -8,4 +8,9 @@ public sealed partial class SettingsPage : Page
     {
         InitializeComponent();
     }
+
+    public void ReloadArchives()
+    {
+        ArchiveListControl.ViewModel.ReloadArchives();
+    }
 }

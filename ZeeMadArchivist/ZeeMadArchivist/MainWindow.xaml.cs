@@ -217,6 +217,16 @@ namespace CyberFeedForward.TheMadArchivist
             SetStatusText(null);
         }
 
+        public void ReloadArchives()
+        {
+            if (MainFrame.Content is not Views.Pages.SettingsPage settingsPage)
+            {
+                return;
+            }
+
+            settingsPage.ReloadArchives();
+        }
+
         private void UpdateWindowTitle(Type? pageType)
         {
             var pageTitle = GetPageTitle(pageType);

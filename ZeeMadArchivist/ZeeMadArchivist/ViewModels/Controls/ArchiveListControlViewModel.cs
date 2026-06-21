@@ -1,3 +1,4 @@
+using CyberFeedForward.TheMadArchivist.Models;
 using CyberFeedForward.TheMadArchivist.Properties;
 using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
@@ -15,14 +16,16 @@ namespace CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
 {
     public delegate int MapDriveDelegate(string folderPath, char driveLetter, string name);
-    public delegate bool TrySetDriveIconDelegate(char driveLetter, out string errorMessage);
+    public delegate bool TrySetDriveIconDelegate(char driveLetter, string iconPath, out string errorMessage);
+    public delegate bool UnmapDriveForPathDelegate(string path);
 
     private readonly ArchivesSettingsService _archivesSettingsService;
     private readonly Func<string, bool> _directoryExists;
     private readonly MapDriveDelegate _mapDrive;
-    private readonly TrySetDriveIconDelegate _trySetDefaultAppDriveIcon;
+    private readonly TrySetDriveIconDelegate _trySetDriveIcon;
+    private readonly UnmapDriveForPathDelegate _unmapDriveForPath;
     private string _newArchivePath = string.Empty;
-    private string? _selectedArchive;
+    private ArchiveItem? _selectedArchive;
 
     public enum ArchiveAddResult
     {
@@ -37,14 +40,16 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         ArchivesSettingsService archivesSettingsService,
         Func<string, bool>? directoryExists = null,
         MapDriveDelegate? mapDrive = null,
-        TrySetDriveIconDelegate? trySetDefaultAppDriveIcon = null)
+        TrySetDriveIconDelegate? trySetDriveIcon = null,
+        UnmapDriveForPathDelegate? unmapDriveForPath = null)
     {
         _archivesSettingsService = archivesSettingsService ?? throw new ArgumentNullException(nameof(archivesSettingsService));
         _directoryExists = directoryExists ?? Directory.Exists;
         _mapDrive = mapDrive ?? FolderTools.MapDrive;
-        _trySetDefaultAppDriveIcon = trySetDefaultAppDriveIcon ?? FolderTools.TrySetDefaultAppDriveIcon;
+        _trySetDriveIcon = trySetDriveIcon ?? FolderTools.TrySetDriveIcon;
+        _unmapDriveForPath = unmapDriveForPath ?? FolderTools.TryUnmapDriveForPath;
 
-        Archives = new ObservableCollection<string>(_archivesSettingsService.GetArchives());
+        Archives = new ObservableCollection<ArchiveItem>(_archivesSettingsService.GetArchives().Select(p => new ArchiveItem(p)));
         Archives.CollectionChanged += Archives_OnCollectionChanged;
 
         var isFirstRun = FirstRunService.Instance.ShouldRunFirstRunExperience();
@@ -59,13 +64,13 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
                 Directory.CreateDirectory(documentsPath);
             }
 
-            Archives.Add(documentsPath);
+            Archives.Add(new ArchiveItem(documentsPath));
         }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    public ObservableCollection<string> Archives { get; }
+    public ObservableCollection<ArchiveItem> Archives { get; }
 
     public string NewArchivePath
     {
@@ -86,12 +91,12 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
 
     public bool IsAddEnabled => !string.IsNullOrWhiteSpace(NewArchivePath);
 
-    public string? SelectedArchive
+    public ArchiveItem? SelectedArchive
     {
         get => _selectedArchive;
         set
         {
-            if (string.Equals(_selectedArchive, value, StringComparison.Ordinal))
+            if (ReferenceEquals(_selectedArchive, value))
             {
                 return;
             }
@@ -107,7 +112,7 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         return result == ArchiveAddResult.Added;
     }
 
-    public bool TryCreateNewArchive(string folderPath, char driveLetter, out string? errorMessage)
+    public bool TryCreateNewArchive(string folderPath, string archiveName, char driveLetter, string iconPath, out string? errorMessage)
     {
         errorMessage = null;
 
@@ -117,25 +122,46 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
             return false;
         }
 
+        if (string.IsNullOrWhiteSpace(archiveName))
+        {
+            errorMessage = "The archive name is invalid.";
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(iconPath))
+        {
+            errorMessage = "The icon path is invalid.";
+            return false;
+        }
+
         try
         {
-            var archiveName = new DirectoryInfo(folderPath).Name;
-            var mapResult = _mapDrive(folderPath, driveLetter, archiveName);
+            var fullArchivePath = Path.GetFullPath(Path.Combine(folderPath, archiveName));
+            Directory.CreateDirectory(fullArchivePath);
+
+            var mapResult = _mapDrive(fullArchivePath, driveLetter, archiveName);
             if (mapResult != 0)
             {
-                errorMessage = FolderTools.GetMapDriveErrorMessage(mapResult, driveLetter, folderPath);
+                errorMessage = FolderTools.GetMapDriveErrorMessage(mapResult, driveLetter, fullArchivePath);
                 Trace.TraceError($"MapDrive failed with code {mapResult}: {errorMessage}");
                 return false;
             }
 
-            if (!_trySetDefaultAppDriveIcon(driveLetter, out var driveIconError))
+            var fullIconPath = Path.GetFullPath(iconPath);
+            if (!File.Exists(fullIconPath))
+            {
+                errorMessage = "Icon file does not exist.";
+                return false;
+            }
+
+            if (!_trySetDriveIcon(driveLetter, fullIconPath, out var driveIconError))
             {
                 errorMessage = $"Failed to set mapped drive icon. {driveIconError}";
                 Trace.TraceError(errorMessage);
                 return false;
             }
 
-            var addResult = TryAddFolderPath(folderPath, clearNewArchivePathOnSuccess: false);
+            var addResult = TryAddFolderPath(fullArchivePath, clearNewArchivePathOnSuccess: false);
             return addResult == ArchiveAddResult.Added;
         }
         catch (Exception ex)
@@ -182,23 +208,24 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
 
     private void InsertArchiveSorted(string archivePath)
     {
+        var item = new ArchiveItem(archivePath);
         if (Archives.Count == 0)
         {
-            Archives.Add(archivePath);
+            Archives.Add(item);
             return;
         }
 
         var comparer = StringComparer.OrdinalIgnoreCase;
         for (var i = 0; i < Archives.Count; i++)
         {
-            if (comparer.Compare(archivePath, Archives[i]) < 0)
+            if (comparer.Compare(item.Name, Archives[i].Name) < 0)
             {
-                Archives.Insert(i, archivePath);
+                Archives.Insert(i, item);
                 return;
             }
         }
 
-        Archives.Add(archivePath);
+        Archives.Add(item);
     }
 
     public bool IsExistingArchive(string? archivePath)
@@ -209,23 +236,18 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
             return false;
         }
 
-        return Archives.Any(a => string.Equals(a, next, StringComparison.OrdinalIgnoreCase));
+        return Archives.Any(a => string.Equals(a.Path, next, StringComparison.OrdinalIgnoreCase));
     }
 
     public void RemoveSelectedArchive()
     {
-        if (string.IsNullOrWhiteSpace(SelectedArchive))
+        if (SelectedArchive is null)
         {
             return;
         }
 
-        var toRemove = Archives.FirstOrDefault(a => string.Equals(a, SelectedArchive, StringComparison.OrdinalIgnoreCase));
-        if (toRemove is null)
-        {
-            return;
-        }
-
-        Archives.Remove(toRemove);
+        _unmapDriveForPath(SelectedArchive.Path);
+        Archives.Remove(SelectedArchive);
         SelectedArchive = null;
     }
 
@@ -236,15 +258,16 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
             return false;
         }
 
-        var toRemove = Archives.FirstOrDefault(a => string.Equals(a, archivePath, StringComparison.OrdinalIgnoreCase));
+        var toRemove = Archives.FirstOrDefault(a => string.Equals(a.Path, archivePath, StringComparison.OrdinalIgnoreCase));
         if (toRemove is null)
         {
             return false;
         }
 
+        _unmapDriveForPath(toRemove.Path);
         Archives.Remove(toRemove);
 
-        if (string.Equals(SelectedArchive, toRemove, StringComparison.OrdinalIgnoreCase))
+        if (ReferenceEquals(SelectedArchive, toRemove))
         {
             SelectedArchive = null;
         }
@@ -252,9 +275,19 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         return true;
     }
 
+    public void ReloadArchives()
+    {
+        var refreshed = _archivesSettingsService.GetArchives();
+        Archives.Clear();
+        foreach (var archive in refreshed)
+        {
+            Archives.Add(new ArchiveItem(archive));
+        }
+    }
+
     private void Archives_OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        _archivesSettingsService.SaveArchives(Archives);
+        _archivesSettingsService.SaveArchives(Archives.Select(a => a.Path).ToList());
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

@@ -49,10 +49,10 @@
                 Grid.Column="3"
                 ToolTipService.ToolTip="Open Folder Selector"
                 Click="BrowseArchiveButton_OnClick">
-                <StackPanel Orientation="Horizontal" Spacing="6">                    
+                <StackPanel Orientation="Horizontal" Spacing="6">
                     <SymbolIcon Symbol="Folder" />
                 </StackPanel>
-            </Button>            
+            </Button>
             <Button
                 x:Name="AddArchiveButton"
                 Grid.Column="1"
@@ -60,9 +60,38 @@
                 IsEnabled="{Binding ElementName=ControlRoot, Path=ViewModel.IsAddEnabled}"
                 Click="AddArchiveButton_OnClick">
                 <StackPanel Orientation="Horizontal" Spacing="6">
-                     <SymbolIcon Symbol="Add" />
+                    <SymbolIcon Symbol="Add" />
                 </StackPanel>
             </Button>
+        </Grid>
+
+        <Grid x:Name="ArchivesTableHeaderGrid" ColumnSpacing="8" Padding="12,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="160" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                x:Name="ArchivesTableHeaderDriveText"
+                Grid.Column="0"
+                Text="Drive"
+                FontWeight="Bold" />
+            <TextBlock
+                x:Name="ArchivesTableHeaderNameText"
+                Grid.Column="1"
+                Text="Name"
+                FontWeight="Bold" />
+            <TextBlock
+                x:Name="ArchivesTableHeaderPathText"
+                Grid.Column="2"
+                Text="Path"
+                FontWeight="Bold" />
+            <TextBlock
+                x:Name="ArchivesTableHeaderDeleteText"
+                Grid.Column="3"
+                Text="Unmap"
+                FontWeight="Bold" />
         </Grid>
 
         <ListView
@@ -70,22 +99,46 @@
             ItemsSource="{Binding ElementName=ControlRoot, Path=ViewModel.Archives}"
             SelectedItem="{Binding ElementName=ControlRoot, Path=ViewModel.SelectedArchive, Mode=TwoWay}"
             MinHeight="120">
+            <ListView.ItemContainerStyle>
+                <Style TargetType="ListViewItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="12,8" />
+                </Style>
+            </ListView.ItemContainerStyle>
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="160" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        
+
+                        <TextBlock
+                            x:Name="ArchiveDriveLetterText"
+                            Grid.Column="0"
+                            Text="{Binding DriveLetter, FallbackValue=''}"
+                            VerticalAlignment="Center"
+                            FontWeight="Bold"
+                            Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <TextBlock
+                            x:Name="ArchiveNameText"
+                            Grid.Column="1"
+                            Text="{Binding Name}"
+                            VerticalAlignment="Center"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTipService.ToolTip="{Binding Name}" />
                         <TextBlock
                             x:Name="ArchivePathText"
-                            Text="{Binding}"
+                            Grid.Column="2"
+                            Text="{Binding Path}"
                             VerticalAlignment="Center"
-                            TextTrimming="CharacterEllipsis" />
+                            TextTrimming="CharacterEllipsis"
+                            ToolTipService.ToolTip="{Binding Path}" />
                         <Button
                             x:Name="RemoveArchiveItemButton"
-                            Grid.Column="1"
+                            Grid.Column="3"
                             Click="RemoveArchiveItemButton_OnClick">
                             <SymbolIcon Symbol="Delete" />
                         </Button>

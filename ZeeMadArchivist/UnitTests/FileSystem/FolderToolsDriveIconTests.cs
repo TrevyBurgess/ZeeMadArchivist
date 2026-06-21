@@ -1,6 +1,8 @@
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace UnitTests.FileSystem;
 
@@ -52,5 +54,43 @@ public sealed class FolderToolsDriveIconTests
 
         Assert.AreEqual("Windows could not find or access C:\\Archives. Check that the folder exists and try again.", result.Message);
         Assert.IsNotNull(result.InnerException);
+    }
+
+    [TestMethod]
+    public void MapDrive_WhenLocalFolderExists_MapsAndUnmapsDrive()
+    {
+        var tempFolder = Path.Combine(Path.GetTempPath(), $"TheMadArchivist_{System.Guid.NewGuid():N}");
+        Directory.CreateDirectory(tempFolder);
+
+        var usedLetters = new HashSet<char>(DriveInfo.GetDrives()
+            .Select(d => char.ToUpperInvariant(d.Name[0]))
+            .Where(c => c is >= 'A' and <= 'Z'));
+
+        var availableLetter = Enumerable.Range('D', 'Z' - 'D' + 1)
+            .Select(c => (char)c)
+            .FirstOrDefault(c => !usedLetters.Contains(c));
+
+        if (availableLetter == default)
+        {
+            Assert.Inconclusive("No unused drive letters available for test.");
+            return;
+        }
+
+        try
+        {
+            var result = FolderTools.MapDrive(tempFolder, availableLetter, "TestArchive");
+            Assert.AreEqual(0, result, $"MapDrive failed with error {result}.");
+            Assert.IsTrue(DriveInfo.GetDrives().Any(d => char.ToUpperInvariant(d.Name[0]) == availableLetter), "Expected drive letter to be mapped.");
+
+            var unmapped = FolderTools.UnmapDrive(availableLetter);
+            Assert.IsTrue(unmapped, "Expected drive to be unmapped.");
+        }
+        finally
+        {
+            if (Directory.Exists(tempFolder))
+            {
+                Directory.Delete(tempFolder, recursive: true);
+            }
+        }
     }
 }

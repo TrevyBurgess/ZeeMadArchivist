@@ -68,10 +68,6 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
         }
 
         FolderTools.LoadDefaultIcons(ViewModel.InitialCustomIconsPath);
-
-
-        // ViewModel.InitialArchivePath
-
     }
 
     private async void BrowseInitialArchivePathButton_OnClick(object sender, RoutedEventArgs e)
@@ -96,6 +92,18 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
         ViewModel.ErrorMessage = null;
     }
 
+    private async void BrowseInitialIconPathButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var file = await PickIconFileAsync();
+        if (file is null)
+        {
+            return;
+        }
+
+        ViewModel.SelectedIconPath = file.Path;
+        ViewModel.ErrorMessage = null;
+    }
+
     private static async Task<StorageFolder?> PickFolderAsync()
     {
         var picker = new FolderPicker();
@@ -112,6 +120,32 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
         try
         {
             return await picker.PickSingleFolderAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+            return null;
+        }
+    }
+
+    private static async Task<StorageFile?> PickIconFileAsync()
+    {
+        var picker = new FileOpenPicker();
+        picker.ViewMode = PickerViewMode.Thumbnail;
+        picker.SuggestedStartLocation = PickerLocationId.ComputerFolder;
+        picker.FileTypeFilter.Add(".ico");
+
+        if (App.MainWindowInstance is null)
+        {
+            return null;
+        }
+
+        var hwnd = WindowNative.GetWindowHandle(App.MainWindowInstance);
+        InitializeWithWindow.Initialize(picker, hwnd);
+
+        try
+        {
+            return await picker.PickSingleFileAsync();
         }
         catch (Exception ex)
         {

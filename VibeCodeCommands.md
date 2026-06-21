@@ -40,11 +40,13 @@ Here are some the vibe code commands I used.
 
 - Add a toggle to GeneralSettingsControl called SetStartup. If input parameter is true, app will start on system reboot. Set default to true.
 - Add a method to FirstRunService to delete all settings.
-
-
 - When a user tries to close the app, check if SetStartupToggleSwitch is set to true. If true, close window and let app run in the background. The first time, warn user app is running in the background. If false, close app
 - Add Open menu item to tray app menu. If app is closed, open it. If minimize, unminimize it
 - Remember state of SetStartupToggleSwitch when app closes
+- When FirstRunCustomizationDialog closes, add InitialArchivePath as a new Archive path to list of archives
+- Add a drive letter dropdown into FirstRunCustomizationDialog. List available drive letters.
+
+
 
 ### 3.3.2. Settings - Archives (ArchiveListControl)
 
@@ -63,6 +65,9 @@ Here are some the vibe code commands I used.
 - Sort folder paths when a user adds a new folder path to list in ArchiveListControl
 - Disable AddArchiveButton when folder path is empty
 - Do not show path in NewArchivePathTextBox when a folder is selected with the folder selector dialog
+- Move code for creating a new archive from NewArchiveButton_OnClick to a method in ArchiveListControlViewModel
+- For each archive in ArchivesListView, include archive name and drive letter
+- Unmap drive when RemoveArchiveItemButton clicked
 
 #### 3.3.2.1. Dialog - NewArchiveDialog
 

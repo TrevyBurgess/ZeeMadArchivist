@@ -178,7 +178,7 @@ public sealed partial class ArchiveListControl : UserControl
             return;
         }
 
-        if (fe.DataContext is not string archivePath)
+        if (fe.DataContext is not Models.ArchiveItem archiveItem)
         {
             return;
         }
@@ -186,7 +186,7 @@ public sealed partial class ArchiveListControl : UserControl
         var dialog = new ContentDialog
         {
             Title = "Remove folder?",
-            Content = $"Remove this folder from the archives list?\n\n{archivePath}",
+            Content = $"Remove this folder from the archives list?\n\n{archiveItem.Path}",
             PrimaryButtonText = "Remove",
             CloseButtonText = "Cancel",
             DefaultButton = ContentDialogButton.Close,
@@ -199,7 +199,7 @@ public sealed partial class ArchiveListControl : UserControl
             return;
         }
 
-        var removed = ViewModel?.RemoveArchive(archivePath) == true;
+        var removed = ViewModel?.RemoveArchive(archiveItem.Path) == true;
         if (!removed)
         {
             return;
@@ -236,13 +236,15 @@ public sealed partial class ArchiveListControl : UserControl
         }
 
         var folderPath = dialog.FolderPath;
+        var archiveName = dialog.ArchiveName;
         var driveLetter = dialog.SelectedDriveLetter;
+        var iconPath = dialog.IconPath;
         if (string.IsNullOrWhiteSpace(folderPath) || driveLetter is null)
         {
             return;
         }
 
-        var created = ViewModel.TryCreateNewArchive(folderPath, driveLetter.Value, out var errorMessage);
+        var created = ViewModel.TryCreateNewArchive(folderPath, archiveName, driveLetter.Value, iconPath, out var errorMessage);
         if (!string.IsNullOrWhiteSpace(errorMessage))
         {
             System.Diagnostics.Trace.TraceError(errorMessage);
