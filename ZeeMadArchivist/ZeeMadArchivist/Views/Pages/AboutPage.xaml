@@ -15,7 +15,7 @@
 
             <TextBlock
                 x:Name="AboutAppNameText"
-                Text="The Mad Archivist"
+                Text="Zee Mad Archivist"
                 Opacity="0.9" />
 
             <TextBlock

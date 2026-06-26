@@ -17,7 +17,7 @@ public sealed partial class HomePageViewModel : INotifyPropertyChanged
 
     public static string Title => "Home";
 
-    public static string Description => "Welcome to The Mad Archivist.";
+    public static string Description => "Welcome to Zee Mad Archivist.";
 
     public string FolderPath
     {

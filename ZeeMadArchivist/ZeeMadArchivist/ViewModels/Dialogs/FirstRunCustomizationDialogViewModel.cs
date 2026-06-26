@@ -4,13 +4,23 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Dialogs;
 
-public sealed partial class FirstRunCustomizationDialogViewModel : INotifyPropertyChanged
+public sealed partial class FirstRunCustomizationDialogViewModel(
+    IAppSettingsStore settingsStore,
+    ThemeSettingsService themeSettingsService,
+    CommandBarSettingsService commandBarSettingsService,
+    StartupSettingsService startupSettingsService,
+    ArchivesSettingsService archivesSettingsService,
+    CustomIconsSettingsService customIconsSettingsService,
+FirstRunCustomizationDialogViewModel.GetUnusedDriveLettersDelegate? getUnusedDriveLetters = null,
+FirstRunCustomizationDialogViewModel.MapDriveDelegate? mapDrive = null,
+FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null) : INotifyPropertyChanged
 {
     public delegate IEnumerable<char> GetUnusedDriveLettersDelegate();
     public delegate int MapDriveDelegate(string folderPath, char driveLetter, string name);
@@ -21,15 +31,15 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
     private const string DefaultArchiveName = "Archive";
     private const string DefaultCustomIconsFolderName = "CustomIcons";
 
-    private readonly ThemeSettingsService _themeSettingsService;
-    private readonly CommandBarSettingsService _commandBarSettingsService;
-    private readonly StartupSettingsService _startupSettingsService;
-    private readonly ArchivesSettingsService _archivesSettingsService;
-    private readonly CustomIconsSettingsService _customIconsSettingsService;
-    private readonly IAppSettingsStore _settingsStore;
-    private readonly GetUnusedDriveLettersDelegate _getUnusedDriveLetters;
-    private readonly MapDriveDelegate _mapDrive;
-    private readonly TrySetDriveIconDelegate _trySetDriveIcon;
+    private readonly ThemeSettingsService _themeSettingsService = themeSettingsService ?? throw new ArgumentNullException(nameof(themeSettingsService));
+    private readonly CommandBarSettingsService _commandBarSettingsService = commandBarSettingsService ?? throw new ArgumentNullException(nameof(commandBarSettingsService));
+    private readonly StartupSettingsService _startupSettingsService = startupSettingsService ?? throw new ArgumentNullException(nameof(startupSettingsService));
+    private readonly ArchivesSettingsService _archivesSettingsService = archivesSettingsService ?? throw new ArgumentNullException(nameof(archivesSettingsService));
+    private readonly CustomIconsSettingsService _customIconsSettingsService = customIconsSettingsService ?? throw new ArgumentNullException(nameof(customIconsSettingsService));
+    private readonly IAppSettingsStore _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
+    private readonly GetUnusedDriveLettersDelegate _getUnusedDriveLetters = getUnusedDriveLetters ?? GetUnusedDriveLetters;
+    private readonly MapDriveDelegate _mapDrive = mapDrive ?? FolderTools.MapDrive;
+    private readonly TrySetDriveIconDelegate _trySetDriveIcon = trySetDriveIcon ?? FolderTools.TrySetDriveIcon;
 
     private string _title = string.Empty;
     private string _initialArchivePath = string.Empty;
@@ -227,31 +237,9 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
     {
     }
 
-    public FirstRunCustomizationDialogViewModel(
-        IAppSettingsStore settingsStore,
-        ThemeSettingsService themeSettingsService,
-        CommandBarSettingsService commandBarSettingsService,
-        StartupSettingsService startupSettingsService,
-        ArchivesSettingsService archivesSettingsService,
-        CustomIconsSettingsService customIconsSettingsService,
-        GetUnusedDriveLettersDelegate? getUnusedDriveLetters = null,
-        MapDriveDelegate? mapDrive = null,
-        TrySetDriveIconDelegate? trySetDriveIcon = null)
-    {
-        _settingsStore = settingsStore ?? throw new ArgumentNullException(nameof(settingsStore));
-        _themeSettingsService = themeSettingsService ?? throw new ArgumentNullException(nameof(themeSettingsService));
-        _commandBarSettingsService = commandBarSettingsService ?? throw new ArgumentNullException(nameof(commandBarSettingsService));
-        _startupSettingsService = startupSettingsService ?? throw new ArgumentNullException(nameof(startupSettingsService));
-        _archivesSettingsService = archivesSettingsService ?? throw new ArgumentNullException(nameof(archivesSettingsService));
-        _customIconsSettingsService = customIconsSettingsService ?? throw new ArgumentNullException(nameof(customIconsSettingsService));
-        _getUnusedDriveLetters = getUnusedDriveLetters ?? GetUnusedDriveLetters;
-        _mapDrive = mapDrive ?? FolderTools.MapDrive;
-        _trySetDriveIcon = trySetDriveIcon ?? FolderTools.TrySetDriveIcon;
-    }
-
     public void LoadDefaults()
     {
-        Title = "Welcome to The Mad Archivist!";
+        Title = "Welcome to Zee Mad Archivist!";
         ThemeModeIndex = 0;
         IsCommandBarOnLeft = true;
         ArchiveName = DefaultArchiveName;
@@ -339,6 +327,7 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
                 {
                     throw new InvalidOperationException($"Failed to set mapped drive icon. {driveIconError}");
                 }
+
             }
         }
 
@@ -419,7 +408,7 @@ public sealed partial class FirstRunCustomizationDialogViewModel : INotifyProper
             throw new ArgumentOutOfRangeException(nameof(startLetter));
         }
 
-        for (var c = start; c <= 'Z'; c++)
+        for (var c = 'Z'; c >= 'A'; c--)
         {
             if (!used.Contains(c))
             {

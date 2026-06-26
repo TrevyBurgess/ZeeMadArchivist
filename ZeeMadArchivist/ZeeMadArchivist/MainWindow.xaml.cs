@@ -21,7 +21,7 @@ namespace CyberFeedForward.TheMadArchivist
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-        private const string AppTitle = "The Mad Archivist";
+        private const string AppTitle = "Zee Mad Archivist";
         private readonly CommandBarSettingsService _commandBarSettings;
         private readonly StartupSettingsService _startupSettingsService;
         private readonly BackgroundCloseWarningService _backgroundCloseWarningService;

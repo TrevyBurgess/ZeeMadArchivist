@@ -51,21 +51,21 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
 
         Archives = new ObservableCollection<ArchiveItem>(_archivesSettingsService.GetArchives().Select(p => new ArchiveItem(p)));
         Archives.CollectionChanged += Archives_OnCollectionChanged;
+        ApplyDriveMetadataForExistingArchives();
 
-        var isFirstRun = FirstRunService.Instance.ShouldRunFirstRunExperience();
+        //var isFirstRun = FirstRunService.Instance.ShouldRunFirstRunExperience();
+        //if (Archives.Count == 0 && !isFirstRun)
+        //{
+        //    var rootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        //    var documentsPath = Path.Combine(rootPath, Resources.DefaultArchiveName);
 
-        if (Archives.Count == 0 && !isFirstRun)
-        {
-            var rootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            var documentsPath = Path.Combine(rootPath, Resources.DefaultArchiveName);
+        //    if (!Directory.Exists(documentsPath))
+        //    {
+        //        Directory.CreateDirectory(documentsPath);
+        //    }
 
-            if (!Directory.Exists(documentsPath))
-            {
-                Directory.CreateDirectory(documentsPath);
-            }
-
-            Archives.Add(new ArchiveItem(documentsPath));
-        }
+        //    Archives.Add(new ArchiveItem(documentsPath));
+        //}
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -285,9 +285,31 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         }
     }
 
+    private void ApplyDriveMetadataForExistingArchives()
+    {
+        var defaultIconPath = FolderTools.GetDefaultAppIconPath();
+
+        foreach (var archive in Archives)
+        {
+            if (!FolderTools.TryFindDriveLetterForPath(archive.Path, out var driveLetter))
+            {
+                continue;
+            }
+
+            if (!FolderTools.TryGetDriveIconPath(driveLetter, out _) && defaultIconPath is not null)
+            {
+                if (!_trySetDriveIcon(driveLetter, defaultIconPath, out var iconError))
+                {
+                    Trace.TraceError($"Failed to set icon for drive {driveLetter}: {iconError}");
+                }
+            }
+
+        }
+    }
+
     private void Archives_OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
-        _archivesSettingsService.SaveArchives(Archives.Select(a => a.Path).ToList());
+        _archivesSettingsService.SaveArchives([.. Archives.Select(a => a.Path)]);
     }
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

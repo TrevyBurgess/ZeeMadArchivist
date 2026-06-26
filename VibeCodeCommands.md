@@ -45,8 +45,8 @@ Here are some the vibe code commands I used.
 - Remember state of SetStartupToggleSwitch when app closes
 - When FirstRunCustomizationDialog closes, add InitialArchivePath as a new Archive path to list of archives
 - Add a drive letter dropdown into FirstRunCustomizationDialog. List available drive letters.
-
-
+- Add image of icon pointed to by InitialIconPathTextBox. Update image when InitialIconPathTextBox changes
+- 
 
 ### 3.3.2. Settings - Archives (ArchiveListControl)
 
@@ -68,6 +68,11 @@ Here are some the vibe code commands I used.
 - Move code for creating a new archive from NewArchiveButton_OnClick to a method in ArchiveListControlViewModel
 - For each archive in ArchivesListView, include archive name and drive letter
 - Unmap drive when RemoveArchiveItemButton clicked
+- Show drive icon for each archive in ArchivesListView
+- The Drive icon and name isn't showing in Windows file explorer
+
+
+- Add an edit button to each row of ArchivesListView. This will allow users to edit the
 
 #### 3.3.2.1. Dialog - NewArchiveDialog
 

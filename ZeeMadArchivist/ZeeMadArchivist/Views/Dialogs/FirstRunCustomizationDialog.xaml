@@ -16,111 +16,140 @@
 
     <StackPanel x:Name="FirstRunCustomizationPanel" Spacing="16" DataContext="{Binding ViewModel, ElementName=MainContent}">
         <TextBlock
+            Visibility="Collapsed"
             x:Name="FirstRunCustomizationDescriptionText"
             Text="Choose a few preferences before you start. You can change these later in Settings."
             TextWrapping="Wrap" />
 
-        <Grid x:Name="InitialArchivePathSelectionGrid" ColumnSpacing="8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+        <Border BorderThickness="1" BorderBrush="Black" Padding="10">
+            <StackPanel x:Name="ArchiveSelectPanel" >
+                <Grid x:Name="InitialArchivePathSelectionGrid" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-            <TextBox
-                x:Name="InitialArchivePathTextBox"
-                Header="Archive folder"
-                PlaceholderText="C:\\Archives"
-                Text="{Binding InitialArchivePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBox
+                        x:Name="InitialArchivePathTextBox"
+                        Header="Initial Archive"
+                        PlaceholderText="C:\\Archives"
+                        Text="{Binding InitialArchivePath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-            <Button
-                x:Name="BrowseInitialArchivePathButton"
-                Grid.Column="1"
-                VerticalAlignment="Bottom"
-                Click="BrowseInitialArchivePathButton_OnClick"
-                >
-                <SymbolIcon Symbol="NewFolder" />
-            </Button>
-        </Grid>
+                    <Button
+                        x:Name="BrowseInitialArchivePathButton"
+                        Grid.Column="1"
+                        VerticalAlignment="Bottom"
+                        Click="BrowseInitialArchivePathButton_OnClick"
+                    >
+                        <SymbolIcon Symbol="NewFolder" />
+                    </Button>
+                </Grid>
 
-        <TextBox
-            x:Name="ArchiveNameTextBox"
-            Header="Archive name"
-            PlaceholderText="MyArchive"
-            Text="{Binding ArchiveName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <Grid x:Name="dd" ColumnSpacing="8" Margin="0,10,0,0" >
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="5" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
 
-        <ComboBox
-            x:Name="DriveLetterComboBox"
-            Header="Drive letter"
-            ItemsSource="{Binding AvailableDriveLetters}"
-            SelectedItem="{Binding SelectedDriveLetter, Mode=TwoWay}" />
+                    <TextBox
+                        Grid.Column="0"
+                        x:Name="ArchiveNameTextBox"
+                        Header="Name"
+                        PlaceholderText="MyArchive"
+                        Text="{Binding ArchiveName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-        <Grid x:Name="InitialIconPathSelectionGrid" ColumnSpacing="8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+                    <ComboBox
+                        Grid.Column="1"
+                        x:Name="DriveLetterComboBox"
+                        Header="Drive letter"
+                        ItemsSource="{Binding AvailableDriveLetters}"
+                        SelectedItem="{Binding SelectedDriveLetter, Mode=TwoWay}" />
 
-            <TextBox
-                x:Name="InitialIconPathTextBox"
-                Header="Drive icon"
-                PlaceholderText="AppIcon.ico"
-                Text="{Binding SelectedIconPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Text="Icon" Grid.Column="3" />
 
-            <Button
-                x:Name="BrowseInitialIconPathButton"
-                Grid.Column="1"
-                VerticalAlignment="Bottom"
-                Click="BrowseInitialIconPathButton_OnClick"
-                >
-                <SymbolIcon Symbol="OpenFile" />
-            </Button>
-        </Grid>
+                    <Button
+                        x:Name="BrowseInitialIconPathButton"
+                        Grid.Column="3"
+                        VerticalAlignment="Bottom"
+                        Click="BrowseInitialIconPathButton_OnClick">
 
-        <Grid x:Name="InitialCustomIconsPathSelectionGrid" ColumnSpacing="8">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
+                        <Image
+                        x:Name="InitialIconPreviewImage"
+                        Width="20"
+                        Height="20"
+                        VerticalAlignment="Bottom"
+                        Stretch="Uniform"
+                        Visibility="Collapsed" />
 
-            <TextBox
-                x:Name="InitialCustomIconsPathTextBox"
-                Header="Initial custom icons path"
-                PlaceholderText="C:\\Archives\\CustomIcons"
-                Text="{Binding InitialCustomIconsPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                        <!--<SymbolIcon Symbol="OpenFile" />-->
+                    </Button>
 
-            <Button
-                x:Name="BrowseInitialCustomIconsPathButton"
-                Grid.Column="1"
-                VerticalAlignment="Bottom"
-                Click="BrowseInitialCustomIconsPathButton_OnClick"
-                >
-                <SymbolIcon Symbol="NewFolder" />
-            </Button>
-        </Grid>
+                    <TextBox
+                        Visibility="Collapsed"
+                        Grid.Column="4"
+                        x:Name="InitialIconPathTextBox"
+                        Header="Drive icon"
+                        PlaceholderText="AppIcon.ico"
+                        Text="{Binding SelectedIconPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                </Grid>
+            </StackPanel>
+        </Border>
 
-        <ComboBox
-            x:Name="ThemeModeComboBox"
-            Header="Theme"
-            SelectedIndex="{Binding ThemeModeIndex, Mode=TwoWay}">
-            <ComboBoxItem x:Name="ThemeModeSystemDefaultItem" Content="System default" />
-            <ComboBoxItem x:Name="ThemeModeLightItem" Content="Light" />
-            <ComboBoxItem x:Name="ThemeModeDarkItem" Content="Dark" />
-        </ComboBox>
+        <Border BorderThickness="1" BorderBrush="Black" Padding="10" >
+            <StackPanel>
 
-        <ToggleSwitch
-            Visibility="Collapsed"
-            x:Name="CommandBarLocationToggleSwitch"
-            Header="Navigation layout"
-            OffContent="Command bar on the right"
-            OnContent="Command bar on the left"
-            IsOn="{Binding IsCommandBarOnLeft, Mode=TwoWay}" />
+                <Grid x:Name="InitialCustomIconsPathSelectionGrid" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
 
-        <ToggleSwitch
-            x:Name="StartupToggleSwitch"
-            Header="Launch at startup"
-            OffContent="Do not launch when Windows starts"
-            OnContent="Launch when Windows starts"
-            IsOn="{Binding SetStartup, Mode=TwoWay}" />
+                    <TextBox
+                        x:Name="InitialCustomIconsPathTextBox"
+                        Header="Initial custom icons path"
+                        PlaceholderText="C:\\Archives\\CustomIcons"
+                        Text="{Binding InitialCustomIconsPath, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <Button
+                        x:Name="BrowseInitialCustomIconsPathButton"
+                        Grid.Column="1"
+                        VerticalAlignment="Bottom"
+                        Click="BrowseInitialCustomIconsPathButton_OnClick"
+                        >
+                        <SymbolIcon Symbol="NewFolder" />
+                    </Button>
+                </Grid>
+
+                <ComboBox
+                    Margin="0,10,0,0"
+                    x:Name="ThemeModeComboBox"
+                    Header="Theme"
+                    SelectedIndex="{Binding ThemeModeIndex, Mode=TwoWay}">
+                    <ComboBoxItem x:Name="ThemeModeSystemDefaultItem" Content="System default" />
+                    <ComboBoxItem x:Name="ThemeModeLightItem" Content="Light" />
+                    <ComboBoxItem x:Name="ThemeModeDarkItem" Content="Dark" />
+                </ComboBox>
+
+                <ToggleSwitch
+                        Margin="0,10,0,0"
+                        Grid.Column="1"
+                        x:Name="StartupToggleSwitch"
+                        Header="Launch at startup"
+                        OffContent="Do not launch when Windows starts"
+                        OnContent="Launch when Windows starts"
+                        IsOn="{Binding SetStartup, Mode=TwoWay}" />
+
+                <ToggleSwitch
+                    Visibility="Collapsed"
+                    x:Name="CommandBarLocationToggleSwitch"
+                    Header="Navigation layout"
+                    OffContent="Command bar on the right"
+                    OnContent="Command bar on the left"
+                    IsOn="{Binding IsCommandBarOnLeft, Mode=TwoWay}" />
+            </StackPanel>
+        </Border>
 
         <TextBlock
             x:Name="ErrorTextBlock"

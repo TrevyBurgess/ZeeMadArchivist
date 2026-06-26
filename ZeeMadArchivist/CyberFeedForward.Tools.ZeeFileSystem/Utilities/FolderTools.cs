@@ -368,20 +368,56 @@ public static partial class FolderTools
 
         try
         {
-            using var key = Registry.CurrentUser.CreateSubKey($@"Software\Classes\Applications\Explorer.exe\Drives\{normalizedLetter}\DefaultIcon");
-            if (key is null)
+            using var iconKey = Registry.CurrentUser.CreateSubKey(
+                $@"Software\Classes\Applications\Explorer.exe\Drives\{normalizedLetter}\DefaultIcon");
+            if (iconKey is null)
             {
                 errorMessage = "Unable to open drive icon registry key.";
                 return false;
             }
 
-            key.SetValue(string.Empty, $"{fullIconPath},0", RegistryValueKind.String);
+            iconKey.SetValue(string.Empty, $"{fullIconPath},0", RegistryValueKind.String);
             SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, null, null);
             return true;
         }
         catch (Exception ex)
         {
             errorMessage = ex.Message;
+            Trace.TraceError(ex.ToString());
+            return false;
+        }
+    }
+
+    public static bool TryGetDriveIconPath(char driveLetter, out string? iconPath)
+    {
+        iconPath = null;
+        var normalizedLetter = char.ToUpperInvariant(driveLetter);
+        if (normalizedLetter is < 'A' or > 'Z')
+        {
+            return false;
+        }
+
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                $@"Software\Classes\Applications\Explorer.exe\Drives\{normalizedLetter}\DefaultIcon");
+            if (key is null)
+            {
+                return false;
+            }
+
+            var raw = key.GetValue(string.Empty) as string;
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return false;
+            }
+
+            var commaIndex = raw.LastIndexOf(',');
+            iconPath = commaIndex >= 0 ? raw.Substring(0, commaIndex).Trim() : raw.Trim();
+            return !string.IsNullOrWhiteSpace(iconPath);
+        }
+        catch (Exception ex)
+        {
             Trace.TraceError(ex.ToString());
             return false;
         }

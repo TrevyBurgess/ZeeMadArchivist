@@ -5,7 +5,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:CyberFeedForward.TheMadArchivist.Converters"
     mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <converters:FilePathToImageSourceConverter x:Key="FilePathToImageSourceConverter" />
+        <converters:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVisibilityConverter" />
+    </UserControl.Resources>
 
     <StackPanel x:Name="ArchivesRootPanel" Spacing="8">
         <TextBlock
@@ -15,10 +21,10 @@
             Margin="0,12,0,0" />
 
         <Button
-                x:Name="NewArchiveButton"
-                Grid.Column="2"
-                ToolTipService.ToolTip="Create New Archive"
-                Click="NewArchiveButton_OnClick" >
+            x:Name="NewArchiveButton"
+            Grid.Column="2"
+            ToolTipService.ToolTip="Create New Archive"
+            Click="NewArchiveButton_OnClick" >
             <StackPanel Orientation="Horizontal">
                 <SymbolIcon Symbol="Folder" />
                 <TextBlock Text="New Archive"  Padding="10,0,0,0" />
@@ -67,29 +73,35 @@
 
         <Grid x:Name="ArchivesTableHeaderGrid" ColumnSpacing="8" Padding="12,8">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="40" />
                 <ColumnDefinition Width="80" />
                 <ColumnDefinition Width="160" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <TextBlock
-                x:Name="ArchivesTableHeaderDriveText"
+                x:Name="ArchivesTableHeaderIconText"
                 Grid.Column="0"
+                Text="Icon"
+                FontWeight="Bold" />
+            <TextBlock
+                x:Name="ArchivesTableHeaderDriveText"
+                Grid.Column="1"
                 Text="Drive"
                 FontWeight="Bold" />
             <TextBlock
                 x:Name="ArchivesTableHeaderNameText"
-                Grid.Column="1"
+                Grid.Column="2"
                 Text="Name"
                 FontWeight="Bold" />
             <TextBlock
                 x:Name="ArchivesTableHeaderPathText"
-                Grid.Column="2"
+                Grid.Column="3"
                 Text="Path"
                 FontWeight="Bold" />
             <TextBlock
                 x:Name="ArchivesTableHeaderDeleteText"
-                Grid.Column="3"
+                Grid.Column="4"
                 Text="Unmap"
                 FontWeight="Bold" />
         </Grid>
@@ -109,36 +121,46 @@
                 <DataTemplate>
                     <Grid ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="40" />
                             <ColumnDefinition Width="80" />
                             <ColumnDefinition Width="160" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
 
+                        <Image
+                            x:Name="ArchiveDriveIconImage"
+                            Grid.Column="0"
+                            Width="24"
+                            Height="24"
+                            VerticalAlignment="Center"
+                            Stretch="Uniform"
+                            Source="{Binding IconPath, Converter={StaticResource FilePathToImageSourceConverter}}"
+                            Visibility="{Binding IconPath, Converter={StaticResource NullOrEmptyToVisibilityConverter}}" />
                         <TextBlock
                             x:Name="ArchiveDriveLetterText"
-                            Grid.Column="0"
+                            Grid.Column="1"
                             Text="{Binding DriveLetter, FallbackValue=''}"
                             VerticalAlignment="Center"
                             FontWeight="Bold"
                             Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
                         <TextBlock
                             x:Name="ArchiveNameText"
-                            Grid.Column="1"
+                            Grid.Column="2"
                             Text="{Binding Name}"
                             VerticalAlignment="Center"
                             TextTrimming="CharacterEllipsis"
                             ToolTipService.ToolTip="{Binding Name}" />
                         <TextBlock
                             x:Name="ArchivePathText"
-                            Grid.Column="2"
+                            Grid.Column="3"
                             Text="{Binding Path}"
                             VerticalAlignment="Center"
                             TextTrimming="CharacterEllipsis"
                             ToolTipService.ToolTip="{Binding Path}" />
                         <Button
                             x:Name="RemoveArchiveItemButton"
-                            Grid.Column="3"
+                            Grid.Column="4"
                             Click="RemoveArchiveItemButton_OnClick">
                             <SymbolIcon Symbol="Delete" />
                         </Button>

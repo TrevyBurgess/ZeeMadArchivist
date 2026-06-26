@@ -9,6 +9,7 @@ namespace CyberFeedForward.TheMadArchivist.Models;
 public sealed class ArchiveItem : INotifyPropertyChanged
 {
     private string? _driveLetter;
+    private string? _iconPath;
 
     public ArchiveItem(string path)
     {
@@ -37,6 +38,21 @@ public sealed class ArchiveItem : INotifyPropertyChanged
         }
     }
 
+    public string? IconPath
+    {
+        get => _iconPath;
+        private set
+        {
+            if (_iconPath == value)
+            {
+                return;
+            }
+
+            _iconPath = value;
+            OnPropertyChanged();
+        }
+    }
+
     public string DisplayText => string.IsNullOrEmpty(DriveLetter)
         ? Name
         : $"{Name} ({DriveLetter}:)";
@@ -45,9 +61,16 @@ public sealed class ArchiveItem : INotifyPropertyChanged
 
     public void RefreshDriveLetter()
     {
-        DriveLetter = FolderTools.TryFindDriveLetterForPath(Path, out var letter)
-            ? letter.ToString()
-            : null;
+        if (FolderTools.TryFindDriveLetterForPath(Path, out var letter))
+        {
+            DriveLetter = letter.ToString();
+            IconPath = FolderTools.TryGetDriveIconPath(letter, out var ip) ? ip : null;
+        }
+        else
+        {
+            DriveLetter = null;
+            IconPath = null;
+        }
     }
 
     private static string GetArchiveName(string path)

@@ -3,6 +3,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Windows.Storage;
@@ -60,29 +61,35 @@ public sealed partial class NewArchiveDialog : ContentDialog
         try
         {
             folder = await picker.PickSingleFolderAsync();
+
+            if (folder is null)
+            {
+                return;
+            }
+
+            ArchiveNameTextBox.Text = folder.Name;
+
+            if (!Directory.Exists(folder.Path))
+                Directory.CreateDirectory(folder.Path);
+
+            FolderPathTextBox.Text = folder.Path;
+
+            HideError();
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Trace.TraceError(ex.ToString());
+            Trace.TraceError(ex.ToString());
             return;
         }
-
-        if (folder is null)
-        {
-            return;
-        }
-
-        FolderPathTextBox.Text = folder.Path;
-        ArchiveNameTextBox.Text = folder.Name;
-
-        HideError();
     }
 
     private async void BrowseIconButton_OnClick(object sender, RoutedEventArgs e)
     {
-        var picker = new FileOpenPicker();
-        picker.ViewMode = PickerViewMode.Thumbnail;
-        picker.SuggestedStartLocation = PickerLocationId.ComputerFolder;
+        var picker = new FileOpenPicker
+        {
+            ViewMode = PickerViewMode.Thumbnail,
+            SuggestedStartLocation = PickerLocationId.ComputerFolder
+        };
         picker.FileTypeFilter.Add(".ico");
 
         if (App.MainWindowInstance is null)
@@ -100,7 +107,7 @@ public sealed partial class NewArchiveDialog : ContentDialog
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Trace.TraceError(ex.ToString());
+            Trace.TraceError(ex.ToString());
             return;
         }
 
@@ -196,7 +203,8 @@ public sealed partial class NewArchiveDialog : ContentDialog
     {
         var used = DriveInfo.GetDrives()
             .Select(d => char.ToUpperInvariant(d.Name[0]))
-            .Where(c => c is >= 'A' and <= 'Z');
+            .Where(c => c is >= 'A' and <= 'Z')
+            .OrderDescending();
 
         return GetUnusedDriveLetters(used);
     }
@@ -207,15 +215,17 @@ public sealed partial class NewArchiveDialog : ContentDialog
 
         var used = new HashSet<char>(usedDriveLetters
             .Select(char.ToUpperInvariant)
-            .Where(c => c is >= 'A' and <= 'Z'));
+            .Where(c => c is >= 'A' and <= 'Z'))
+            .OrderDescending();
 
-        var start = char.ToUpperInvariant(startLetter);
-        if (start is < 'A' or > 'Z')
+        var end = char.ToUpperInvariant(startLetter);
+        if (end is < 'A' or > 'Z')
         {
             throw new ArgumentOutOfRangeException(nameof(startLetter));
         }
 
-        for (var c = start; c <= 'Z'; c++)
+        for (var c = 'Z'; c >= end; c--)
+        //for (var c = start; c <= 'Z'; c++)
         {
             if (!used.Contains(c))
             {

@@ -95,7 +95,7 @@ public sealed class FirstRunCustomizationDialogViewModelTests
 
         viewModel.LoadDefaults();
 
-        Assert.AreEqual("Welcome to The Mad Archivist!", viewModel.Title);
+        Assert.AreEqual("Welcome to Zee Mad Archivist!", viewModel.Title);
         Assert.AreEqual(0, viewModel.ThemeModeIndex);
         Assert.AreEqual(AppThemeMode.SystemDefault, viewModel.ThemeMode);
         Assert.IsTrue(viewModel.IsCommandBarOnLeft);

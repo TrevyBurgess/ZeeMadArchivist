@@ -4,11 +4,15 @@ using CyberFeedForward.TheMadArchivist.ViewModels.Dialogs;
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.Storage.Streams;
 using WinRT.Interop;
 
 namespace CyberFeedForward.TheMadArchivist.Views.Dialogs;
@@ -38,6 +42,42 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
         ViewModel.LoadDefaults();
         MainContent.Title = ViewModel.Title;
         Closing += FirstRunCustomizationDialog_Closing;
+        ViewModel.PropertyChanged += ViewModel_OnPropertyChanged;
+        _ = UpdateIconPreviewAsync(ViewModel.SelectedIconPath);
+    }
+
+    private void ViewModel_OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ViewModel.SelectedIconPath))
+        {
+            _ = UpdateIconPreviewAsync(ViewModel.SelectedIconPath);
+        }
+    }
+
+    private async Task UpdateIconPreviewAsync(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || !File.Exists(path))
+        {
+            InitialIconPreviewImage.Source = null;
+            InitialIconPreviewImage.Visibility = Visibility.Collapsed;
+            return;
+        }
+
+        try
+        {
+            var bitmap = new BitmapImage();
+            using var fileStream = File.OpenRead(path);
+            using var rasStream = fileStream.AsRandomAccessStream();
+            await bitmap.SetSourceAsync(rasStream);
+            InitialIconPreviewImage.Source = bitmap;
+            InitialIconPreviewImage.Visibility = Visibility.Visible;
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+            InitialIconPreviewImage.Source = null;
+            InitialIconPreviewImage.Visibility = Visibility.Collapsed;
+        }
     }
 
     private void FirstRunCustomizationDialog_Closing(ContentDialog sender, ContentDialogClosingEventArgs args)

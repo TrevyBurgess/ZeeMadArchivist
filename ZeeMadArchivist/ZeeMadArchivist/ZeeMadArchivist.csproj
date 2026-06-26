@@ -170,7 +170,7 @@
     <PublishReadyToRun Condition="'$(Configuration)' != 'Debug'">True</PublishReadyToRun>
     <PublishTrimmed Condition="'$(Configuration)' == 'Debug'">False</PublishTrimmed>
     <PublishTrimmed Condition="'$(Configuration)' != 'Debug'">True</PublishTrimmed>
-    <AssemblyTitle>The Mad Archivist</AssemblyTitle>
+    <AssemblyTitle>Zee Mad Archivist</AssemblyTitle>
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <IncludeSymbols>True</IncludeSymbols>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
