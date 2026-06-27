@@ -1,5 +1,6 @@
 using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.ViewModels.Controls;
+using CyberFeedForward.TheMadArchivist.ViewModels.Dialogs;
 using CyberFeedForward.TheMadArchivist.Views.Dialogs;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -31,7 +32,7 @@ public sealed partial class ArchiveListControl : UserControl
     {
         try
         {
-            NewArchiveButton.IsEnabled = NewArchiveDialog.GetUnusedDriveLetters().Any();
+            NewArchiveButton.IsEnabled = NewArchiveDialogViewModel.GetUnusedDriveLetters().Any();
         }
         catch (Exception ex)
         {

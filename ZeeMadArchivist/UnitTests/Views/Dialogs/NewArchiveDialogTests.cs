@@ -1,4 +1,4 @@
-using CyberFeedForward.TheMadArchivist.Views.Dialogs;
+using CyberFeedForward.TheMadArchivist.ViewModels.Dialogs;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Linq;
 
@@ -10,7 +10,7 @@ public sealed class NewArchiveDialogTests
     [TestMethod]
     public void GetUnusedDriveLetters_WhenSomeUsed_ReturnsRemainingStartingAtD()
     {
-        var result = NewArchiveDialog.GetUnusedDriveLetters(new[] { 'C', 'D', 'F' }).ToArray();
+        var result = NewArchiveDialogViewModel.GetUnusedDriveLetters(new[] { 'C', 'D', 'F' }).ToArray();
 
         Assert.IsFalse(result.Contains('D'));
         Assert.IsTrue(result.Contains('E'));
@@ -20,7 +20,7 @@ public sealed class NewArchiveDialogTests
     [TestMethod]
     public void GetUnusedDriveLetters_WhenStartLetterB_IncludesBIfUnused()
     {
-        var result = NewArchiveDialog.GetUnusedDriveLetters(new[] { 'C' }, startLetter: 'B').ToArray();
+        var result = NewArchiveDialogViewModel.GetUnusedDriveLetters(new[] { 'C' }, startLetter: 'B').ToArray();
 
         Assert.IsTrue(result.Contains('B'));
         Assert.IsFalse(result.Contains('C'));

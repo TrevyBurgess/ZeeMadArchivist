@@ -4,11 +4,16 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:converters="using:CyberFeedForward.TheMadArchivist.Converters"
     mc:Ignorable="d"
     Title="New Archive"
     PrimaryButtonText="Save"
     CloseButtonText="Cancel"
     DefaultButton="Primary">
+
+    <ContentDialog.Resources>
+        <converters:NullOrEmptyToVisibilityConverter x:Key="NullOrEmptyToVisibilityConverter" />
+    </ContentDialog.Resources>
 
     <Grid x:Name="NewArchiveDialogRootGrid" RowSpacing="12">
         <Grid.RowDefinitions>
@@ -26,7 +31,8 @@
                 <TextBox
                     x:Name="FolderPathTextBox"
                     Header="Folder path"
-                    PlaceholderText="C:\\Archives" />
+                    PlaceholderText="C:\\Archives"
+                    Text="{x:Bind ViewModel.FolderPath, Mode=TwoWay}" />
 
                 <Button
                     x:Name="BrowseFolderButton"
@@ -39,11 +45,14 @@
             <TextBox
                 x:Name="ArchiveNameTextBox"
                 Header="Archive name"
-                PlaceholderText="MyArchive" />
+                PlaceholderText="MyArchive"
+                Text="{x:Bind ViewModel.ArchiveName, Mode=TwoWay}" />
 
             <ComboBox
                 x:Name="DriveLetterComboBox"
-                Header="Drive letter" />
+                Header="Drive letter"
+                ItemsSource="{x:Bind ViewModel.AvailableDriveLetters}"
+                SelectedItem="{x:Bind ViewModel.SelectedDriveLetter, Mode=TwoWay}" />
 
             <Grid x:Name="IconPathSelectionGrid" ColumnSpacing="8">
                 <Grid.ColumnDefinitions>
@@ -54,7 +63,8 @@
                 <TextBox
                     x:Name="IconPathTextBox"
                     Header="Icon path"
-                    PlaceholderText="AppIcon.ico" />
+                    PlaceholderText="AppIcon.ico"
+                    Text="{x:Bind ViewModel.IconPath, Mode=TwoWay}" />
 
                 <Button
                     x:Name="BrowseIconButton"
@@ -70,6 +80,7 @@
             Grid.Row="1"
             Foreground="Red"
             TextWrapping="Wrap"
-            Visibility="Collapsed" />
+            Text="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+            Visibility="{x:Bind ViewModel.ErrorMessage, Converter={StaticResource NullOrEmptyToVisibilityConverter}, Mode=OneWay}" />
     </Grid>
 </ContentDialog>
