@@ -1,12 +1,11 @@
+using CyberFeedForward.TheMadArchivist.ViewModels;
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using System;
-using System.ComponentModel;
 using System.IO;
-using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.Models;
 
-public sealed class ArchiveItem : INotifyPropertyChanged
+public sealed class ArchiveItem : ViewModelBase
 {
     private string? _driveLetter;
     private string? _iconPath;
@@ -27,37 +26,22 @@ public sealed class ArchiveItem : INotifyPropertyChanged
         get => _driveLetter;
         private set
         {
-            if (_driveLetter == value)
+            if (SetField(ref _driveLetter, value))
             {
-                return;
+                OnPropertyChanged(nameof(DisplayText));
             }
-
-            _driveLetter = value;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(DisplayText));
         }
     }
 
     public string? IconPath
     {
         get => _iconPath;
-        private set
-        {
-            if (_iconPath == value)
-            {
-                return;
-            }
-
-            _iconPath = value;
-            OnPropertyChanged();
-        }
+        private set => SetField(ref _iconPath, value);
     }
 
     public string DisplayText => string.IsNullOrEmpty(DriveLetter)
         ? Name
         : $"{Name} ({DriveLetter}:)";
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 
     public void RefreshDriveLetter()
     {
@@ -83,10 +67,5 @@ public sealed class ArchiveItem : INotifyPropertyChanged
 
         var name = new DirectoryInfo(trimmed).Name;
         return string.IsNullOrWhiteSpace(name) ? trimmed : name;
-    }
-
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

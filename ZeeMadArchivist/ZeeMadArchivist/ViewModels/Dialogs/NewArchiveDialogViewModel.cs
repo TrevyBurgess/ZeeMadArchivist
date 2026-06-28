@@ -2,14 +2,12 @@ using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Dialogs;
 
-public sealed class NewArchiveDialogViewModel : INotifyPropertyChanged
+public sealed partial class NewArchiveDialogViewModel : ViewModelBase
 {
     public delegate IEnumerable<char> GetUnusedDriveLettersDelegate();
 
@@ -32,73 +30,37 @@ public sealed class NewArchiveDialogViewModel : INotifyPropertyChanged
 
     public ObservableCollection<string> AvailableDriveLetters { get; } = [];
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public string FolderPath
     {
         get => _folderPath;
-        set
-        {
-            if (_folderPath == value) return;
-            _folderPath = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _folderPath, value);
     }
 
     public string ArchiveName
     {
         get => _archiveName;
-        set
-        {
-            if (_archiveName == value) return;
-            _archiveName = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _archiveName, value);
     }
 
     public string IconPath
     {
         get => _iconPath;
-        set
-        {
-            if (_iconPath == value) return;
-            _iconPath = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _iconPath, value);
     }
 
     public string? SelectedDriveLetter
     {
         get => _selectedDriveLetter;
-        set
-        {
-            if (_selectedDriveLetter == value) return;
-            _selectedDriveLetter = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _selectedDriveLetter, value);
     }
 
     public string? ErrorMessage
     {
         get => _errorMessage;
-        set
-        {
-            if (_errorMessage == value) return;
-            _errorMessage = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _errorMessage, value);
     }
 
-    public char? ParsedDriveLetter
-    {
-        get
-        {
-            var s = SelectedDriveLetter?.Trim();
-            if (string.IsNullOrEmpty(s)) return null;
-            var c = char.ToUpperInvariant(s[0]);
-            return c is >= 'A' and <= 'Z' ? c : null;
-        }
-    }
+    public char? ParsedDriveLetter => DriveLetterHelper.ParseDriveLetter(SelectedDriveLetter);
 
     public bool Validate()
     {
@@ -158,37 +120,8 @@ public sealed class NewArchiveDialogViewModel : INotifyPropertyChanged
     }
 
     public static IEnumerable<char> GetUnusedDriveLetters()
-    {
-        var used = DriveInfo.GetDrives()
-            .Select(d => char.ToUpperInvariant(d.Name[0]))
-            .Where(c => c is >= 'A' and <= 'Z');
-
-        return GetUnusedDriveLetters(used);
-    }
+        => DriveLetterHelper.GetUnusedDriveLetters();
 
     public static IEnumerable<char> GetUnusedDriveLetters(IEnumerable<char> usedDriveLetters, char startLetter = 'D')
-    {
-        ArgumentNullException.ThrowIfNull(usedDriveLetters);
-
-        var used = new HashSet<char>(usedDriveLetters
-            .Select(char.ToUpperInvariant)
-            .Where(c => c is >= 'A' and <= 'Z'));
-
-        var start = char.ToUpperInvariant(startLetter);
-        if (start is < 'A' or > 'Z')
-        {
-            throw new ArgumentOutOfRangeException(nameof(startLetter));
-        }
-
-        for (var c = 'Z'; c >= start; c--)
-        {
-            if (!used.Contains(c))
-            {
-                yield return c;
-            }
-        }
-    }
-
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        => DriveLetterHelper.GetUnusedDriveLetters(usedDriveLetters, startLetter);
 }

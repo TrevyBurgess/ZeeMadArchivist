@@ -3,11 +3,9 @@ using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Dialogs;
 
@@ -20,7 +18,7 @@ public sealed partial class FirstRunCustomizationDialogViewModel(
     CustomIconsSettingsService customIconsSettingsService,
 FirstRunCustomizationDialogViewModel.GetUnusedDriveLettersDelegate? getUnusedDriveLetters = null,
 FirstRunCustomizationDialogViewModel.MapDriveDelegate? mapDrive = null,
-FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null) : INotifyPropertyChanged
+FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null) : ViewModelBase
 {
     public delegate IEnumerable<char> GetUnusedDriveLettersDelegate();
     public delegate int MapDriveDelegate(string folderPath, char driveLetter, string name);
@@ -54,81 +52,34 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
 
     public ObservableCollection<string> AvailableDriveLetters { get; } = [];
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public string Title
     {
         get => _title;
-        set
-        {
-            if (_title == value)
-            {
-                return;
-            }
-
-            _title = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _title, value);
     }
 
     public string InitialArchivePath
     {
         get => _initialArchivePath;
-        set
-        {
-            if (_initialArchivePath == value)
-            {
-                return;
-            }
-
-            _initialArchivePath = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _initialArchivePath, value);
     }
 
     public string ArchiveName
     {
         get => _archiveName;
-        set
-        {
-            if (_archiveName == value)
-            {
-                return;
-            }
-
-            _archiveName = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _archiveName, value);
     }
 
     public string SelectedIconPath
     {
         get => _selectedIconPath;
-        set
-        {
-            if (_selectedIconPath == value)
-            {
-                return;
-            }
-
-            _selectedIconPath = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _selectedIconPath, value);
     }
 
     public string InitialCustomIconsPath
     {
         get => _initialCustomIconsPath;
-        set
-        {
-            if (_initialCustomIconsPath == value)
-            {
-                return;
-            }
-
-            _initialCustomIconsPath = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _initialCustomIconsPath, value);
     }
 
     public int ThemeModeIndex
@@ -136,13 +87,7 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
         get => _themeModeIndex;
         set
         {
-            if (_themeModeIndex == value)
-            {
-                return;
-            }
-
-            _themeModeIndex = value;
-            OnPropertyChanged();
+            if (!SetField(ref _themeModeIndex, value)) return;
             OnPropertyChanged(nameof(ThemeMode));
         }
     }
@@ -166,61 +111,25 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
     public bool IsCommandBarOnLeft
     {
         get => _isCommandBarOnLeft;
-        set
-        {
-            if (_isCommandBarOnLeft == value)
-            {
-                return;
-            }
-
-            _isCommandBarOnLeft = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _isCommandBarOnLeft, value);
     }
 
     public bool SetStartup
     {
         get => _setStartup;
-        set
-        {
-            if (_setStartup == value)
-            {
-                return;
-            }
-
-            _setStartup = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _setStartup, value);
     }
 
     public string? ErrorMessage
     {
         get => _errorMessage;
-        set
-        {
-            if (_errorMessage == value)
-            {
-                return;
-            }
-
-            _errorMessage = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _errorMessage, value);
     }
 
     public string? SelectedDriveLetter
     {
         get => _selectedDriveLetter;
-        set
-        {
-            if (_selectedDriveLetter == value)
-            {
-                return;
-            }
-
-            _selectedDriveLetter = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _selectedDriveLetter, value);
     }
 
     public FirstRunCustomizationDialogViewModel(IAppSettingsStore settingsStore)
@@ -342,26 +251,9 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
 
     private bool TryParseSelectedDriveLetter(out char driveLetter)
     {
-        driveLetter = default;
-        if (string.IsNullOrWhiteSpace(SelectedDriveLetter))
-        {
-            return false;
-        }
-
-        var trimmed = SelectedDriveLetter.Trim();
-        if (trimmed.Length < 1)
-        {
-            return false;
-        }
-
-        var letter = char.ToUpperInvariant(trimmed[0]);
-        if (letter is < 'A' or > 'Z')
-        {
-            return false;
-        }
-
-        driveLetter = letter;
-        return true;
+        var parsed = DriveLetterHelper.ParseDriveLetter(SelectedDriveLetter);
+        driveLetter = parsed ?? default;
+        return parsed.HasValue;
     }
 
     public static string GetDefaultArchivePath()
@@ -386,39 +278,8 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
     }
 
     public static IEnumerable<char> GetUnusedDriveLetters()
-    {
-        var used = DriveInfo.GetDrives()
-            .Select(d => char.ToUpperInvariant(d.Name[0]))
-            .Where(c => c is >= 'A' and <= 'Z');
-
-        return GetUnusedDriveLetters(used);
-    }
+        => DriveLetterHelper.GetUnusedDriveLetters();
 
     public static IEnumerable<char> GetUnusedDriveLetters(IEnumerable<char> usedDriveLetters, char startLetter = 'D')
-    {
-        ArgumentNullException.ThrowIfNull(usedDriveLetters);
-
-        var used = new HashSet<char>(usedDriveLetters
-            .Select(char.ToUpperInvariant)
-            .Where(c => c is >= 'A' and <= 'Z'));
-
-        var start = char.ToUpperInvariant(startLetter);
-        if (start is < 'A' or > 'Z')
-        {
-            throw new ArgumentOutOfRangeException(nameof(startLetter));
-        }
-
-        for (var c = 'Z'; c >= 'A'; c--)
-        {
-            if (!used.Contains(c))
-            {
-                yield return c;
-            }
-        }
-    }
-
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
+        => DriveLetterHelper.GetUnusedDriveLetters(usedDriveLetters, startLetter);
 }

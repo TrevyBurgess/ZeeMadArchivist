@@ -1,12 +1,10 @@
 using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.Utilities;
 using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels;
 
-public sealed partial class MainWindowViewModel : INotifyPropertyChanged
+public sealed partial class MainWindowViewModel : ViewModelBase
 {
     private readonly CommandBarSettingsService _commandBarSettingsService;
     private string _statusText;
@@ -30,21 +28,13 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
 
     private string DefaultFolderPath { get; }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public string StatusText
     {
         get => _statusText;
         set
         {
             var next = string.IsNullOrWhiteSpace(value) ? "Ready" : value;
-            if (string.Equals(_statusText, next, StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            _statusText = next;
-            OnPropertyChanged();
+            SetField(ref _statusText, next);
         }
     }
 
@@ -53,20 +43,8 @@ public sealed partial class MainWindowViewModel : INotifyPropertyChanged
         get => _isCommandBarOnLeft;
         set
         {
-            if (_isCommandBarOnLeft == value)
-            {
-                return;
-            }
-
-            _isCommandBarOnLeft = value;
-            OnPropertyChanged();
-
+            if (!SetField(ref _isCommandBarOnLeft, value)) return;
             _commandBarSettingsService.SetCommandBarOnLeft(value);
         }
-    }
-
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

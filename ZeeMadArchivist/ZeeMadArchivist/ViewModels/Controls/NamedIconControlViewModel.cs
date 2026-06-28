@@ -4,19 +4,17 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 
-public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
+public sealed partial class NamedIconControlViewModel : ViewModelBase
 {
     private string _name = string.Empty;
     private Symbol _iconSymbol = Symbol.Placeholder;
@@ -114,37 +112,16 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         }
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public string Name
     {
         get => _name;
-        set
-        {
-            var next = value ?? string.Empty;
-            if (string.Equals(_name, next, StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            _name = next;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _name, value ?? string.Empty);
     }
 
     public Symbol IconSymbol
     {
         get => _iconSymbol;
-        set
-        {
-            if (_iconSymbol == value)
-            {
-                return;
-            }
-
-            _iconSymbol = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _iconSymbol, value);
     }
 
     public string CustomIconsFolderPath
@@ -153,13 +130,7 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         set
         {
             var normalized = NormalizeCustomIconsFolderPath(value);
-            if (string.Equals(_customIconsFolderPath, normalized, StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            _customIconsFolderPath = normalized;
-            OnPropertyChanged();
+            if (!SetField(ref _customIconsFolderPath, normalized)) return;
             OnPropertyChanged(nameof(IsCustomIconsPathSaveEnabled));
             RefreshIconList();
             ResetCustomIconsFolderWatcher();
@@ -274,16 +245,7 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
     public bool IsSaveEnabled
     {
         get => _isSaveEnabled;
-        private set
-        {
-            if (_isSaveEnabled == value)
-            {
-                return;
-            }
-
-            _isSaveEnabled = value;
-            OnPropertyChanged();
-        }
+        private set => SetField(ref _isSaveEnabled, value);
     }
 
     public void RefreshIcons()
@@ -796,11 +758,6 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
         IsSaveEnabled = false;
     }
 
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
-
     private sealed class NamedIconControlFileModel
     {
         public System.Collections.Generic.List<NamedIconRowFileModel>? Items { get; set; }
@@ -874,7 +831,7 @@ public sealed partial class NamedIconControlViewModel : INotifyPropertyChanged
     }
 }
 
-public sealed partial class IconListItemViewModel : INotifyPropertyChanged
+public sealed partial class IconListItemViewModel : ViewModelBase
 {
     private string _name = string.Empty;
 
@@ -889,34 +846,21 @@ public sealed partial class IconListItemViewModel : INotifyPropertyChanged
         _name = initialName;
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public string FilePath { get; }
 
     public string OriginalName { get; }
 
-    public bool IsDirty
-    {
-        get
-        {
-            return !string.Equals(Name, OriginalName, StringComparison.Ordinal);
-        }
-    }
+    public bool IsDirty => !string.Equals(Name, OriginalName, StringComparison.Ordinal);
 
     public string Name
     {
         get => _name;
         set
         {
-            var next = value ?? string.Empty;
-            if (string.Equals(_name, next, StringComparison.Ordinal))
+            if (SetField(ref _name, value ?? string.Empty))
             {
-                return;
+                OnPropertyChanged(nameof(IsDirty));
             }
-
-            _name = next;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsDirty)));
         }
     }
 
@@ -942,28 +886,21 @@ public sealed partial class IconListItemViewModel : INotifyPropertyChanged
     }
 }
 
-public sealed partial class NamedIconRowViewModel(string? iconPath, string? text) : INotifyPropertyChanged
+public sealed partial class NamedIconRowViewModel(string? iconPath, string? text) : ViewModelBase
 {
     private string _iconPath = iconPath ?? string.Empty;
     private string _text = text ?? string.Empty;
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 
     public string IconPath
     {
         get => _iconPath;
         set
         {
-            var next = value ?? string.Empty;
-            if (string.Equals(_iconPath, next, StringComparison.Ordinal))
+            if (SetField(ref _iconPath, value ?? string.Empty))
             {
-                return;
+                OnPropertyChanged(nameof(IconUri));
+                OnPropertyChanged(nameof(IconImage));
             }
-
-            _iconPath = next;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IconUri));
-            OnPropertyChanged(nameof(IconImage));
         }
     }
 
@@ -1012,21 +949,6 @@ public sealed partial class NamedIconRowViewModel(string? iconPath, string? text
     public string Text
     {
         get => _text;
-        set
-        {
-            var next = value ?? string.Empty;
-            if (string.Equals(_text, next, StringComparison.Ordinal))
-            {
-                return;
-            }
-
-            _text = next;
-            OnPropertyChanged();
-        }
-    }
-
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        set => SetField(ref _text, value ?? string.Empty);
     }
 }

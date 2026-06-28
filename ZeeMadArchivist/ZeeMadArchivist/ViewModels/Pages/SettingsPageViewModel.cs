@@ -2,12 +2,10 @@ using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.Utilities;
 using Microsoft.UI.Xaml;
 using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Pages;
 
-public sealed partial class SettingsPageViewModel : INotifyPropertyChanged
+public sealed partial class SettingsPageViewModel : ViewModelBase
 {
     private const string SetStartupPreferenceKey = "Settings.SetStartup";
 
@@ -93,25 +91,15 @@ public sealed partial class SettingsPageViewModel : INotifyPropertyChanged
         }
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public AppThemeMode ThemeMode
     {
         get => _themeMode;
         set
         {
-            if (_themeMode == value)
-            {
-                return;
-            }
-
-            _themeMode = value;
-            OnPropertyChanged();
+            if (!SetField(ref _themeMode, value)) return;
             OnPropertyChanged(nameof(IsDarkModeEnabled));
             OnPropertyChanged(nameof(ThemeModeIndex));
-
             _themeSettingsService.SetThemeMode(value);
-
             var rootElement = _themeRootElement ?? (App.MainWindowInstance?.Content as FrameworkElement);
             if (rootElement is not null)
             {
@@ -123,16 +111,7 @@ public sealed partial class SettingsPageViewModel : INotifyPropertyChanged
     public bool SetStartup
     {
         get => _setStartup;
-        set
-        {
-            if (_setStartup == value)
-            {
-                return;
-            }
-
-            _setStartup = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _setStartup, value);
     }
 
     public bool TrySetStartupEnabled(bool enabled, out string? errorMessage)
@@ -180,25 +159,12 @@ public sealed partial class SettingsPageViewModel : INotifyPropertyChanged
         get => _isCommandBarOnLeft;
         set
         {
-            if (_isCommandBarOnLeft == value)
-            {
-                return;
-            }
-
-            _isCommandBarOnLeft = value;
-            OnPropertyChanged();
-
+            if (!SetField(ref _isCommandBarOnLeft, value)) return;
             _commandBarSettingsService.SetCommandBarOnLeft(value);
-
             if (App.MainWindowInstance is MainWindow mainWindow)
             {
                 mainWindow.SetCommandBarOnLeft(value);
             }
         }
-    }
-
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

@@ -2,19 +2,15 @@ using CyberFeedForward.TheMadArchivist.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 
-public sealed partial class BreadcrumbBarViewModel(IFileSystemService fileSystemService) : INotifyPropertyChanged
+public sealed partial class BreadcrumbBarViewModel(IFileSystemService fileSystemService) : ViewModelBase
 {
     private readonly IFileSystemService _fileSystemService = fileSystemService ?? throw new ArgumentNullException(nameof(fileSystemService));
     private string? _folderPath = "C:\\\\";
-
-    public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<BreadcrumbSegmentViewModel> Segments { get; } = [];
 
@@ -23,14 +19,10 @@ public sealed partial class BreadcrumbBarViewModel(IFileSystemService fileSystem
         get => _folderPath;
         set
         {
-            if (string.Equals(_folderPath, value, StringComparison.Ordinal))
+            if (SetField(ref _folderPath, value))
             {
-                return;
+                RebuildSegments();
             }
-
-            _folderPath = value;
-            OnPropertyChanged();
-            RebuildSegments();
         }
     }
 
@@ -96,10 +88,6 @@ public sealed partial class BreadcrumbBarViewModel(IFileSystemService fileSystem
             .Where(n => !string.IsNullOrWhiteSpace(n))];
     }
 
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
 }
 
 public sealed class BreadcrumbSegmentViewModel(string folderPath, IReadOnlyList<string> items)

@@ -70,9 +70,8 @@ Here are some the vibe code commands I used.
 - Unmap drive when RemoveArchiveItemButton clicked
 - Show drive icon for each archive in ArchivesListView
 - The Drive icon and name isn't showing in Windows file explorer
-
-
 - Add an edit button to each row of ArchivesListView. This will allow users to edit the
+- I mapped a folder as a drive, but the drive is empty
 
 #### 3.3.2.1. Dialog - NewArchiveDialog
 
@@ -83,7 +82,7 @@ Here are some the vibe code commands I used.
 - Show user friendly error when drive mapping fails
 - Make sure all required capabilities and declarations are set.
 
-### Page - Settings - Icons (NamedIconControl)
+### 3.4.3.1. Page - Settings - Icons (NamedIconControl)
 
 - Create a user control called NamedIconControl. Include a viewmodel
 - Add a table to NamedIconControl. This will be populated from a JSON file. Each row will contain an image from an icon file, and a text box. Below the table will be a save button. The file will be saved to ProgramData
@@ -103,6 +102,11 @@ Here are some the vibe code commands I used.
 - Add a button in NamedIconSettings control called LoadDefaultIcons. When clicked, copy call LoadDefaultIcons method
 - Update IconList when files CustomIcons folder changes
 
+## 3.3.4.1. Page - Settings - About
+
+- Create a User Control called AboutControl.
+- Add a new tab to SettingsStackPanel to house AboutControl.
+
 # On Startup
 
 - Is there a method that is run when the app is first installed?
@@ -117,11 +121,6 @@ Here are some the vibe code commands I used.
 
 - When FirstRunCustomizationDialog closes, create the CustomIcons folder and copy icons from AppTools.Icons to the folder.
 - Replace the Save and Skip buttons in FirstRunCustomizationDialog with OK button
-
-## Page - Settings - About
-
-- Create a User Control called AboutControl.
-- Add a new tab to SettingsStackPanel to house AboutControl.
 
 ---
 

@@ -1,19 +1,18 @@
 using CyberFeedForward.TheMadArchivist.Models;
 using CyberFeedForward.TheMadArchivist.Properties;
 using CyberFeedForward.TheMadArchivist.Services;
+using CyberFeedForward.TheMadArchivist.ViewModels;
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using System;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 
-public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
+public sealed partial class ArchiveListControlViewModel : ViewModelBase
 {
     public delegate int MapDriveDelegate(string folderPath, char driveLetter, string name);
     public delegate bool TrySetDriveIconDelegate(char driveLetter, string iconPath, out string errorMessage);
@@ -68,8 +67,6 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         //}
     }
 
-    public event PropertyChangedEventHandler? PropertyChanged;
-
     public ObservableCollection<ArchiveItem> Archives { get; }
 
     public string NewArchivePath
@@ -77,15 +74,10 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         get => _newArchivePath;
         set
         {
-            var next = value ?? string.Empty;
-            if (string.Equals(_newArchivePath, next, StringComparison.Ordinal))
+            if (SetField(ref _newArchivePath, value ?? string.Empty))
             {
-                return;
+                OnPropertyChanged(nameof(IsAddEnabled));
             }
-
-            _newArchivePath = next;
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(IsAddEnabled));
         }
     }
 
@@ -94,16 +86,7 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
     public ArchiveItem? SelectedArchive
     {
         get => _selectedArchive;
-        set
-        {
-            if (ReferenceEquals(_selectedArchive, value))
-            {
-                return;
-            }
-
-            _selectedArchive = value;
-            OnPropertyChanged();
-        }
+        set => SetField(ref _selectedArchive, value);
     }
 
     public bool AddArchive()
@@ -293,7 +276,11 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         {
             if (!FolderTools.TryFindDriveLetterForPath(archive.Path, out var driveLetter))
             {
-                continue;
+                driveLetter = TryRemapArchive(archive);
+                if (driveLetter == default)
+                {
+                    continue;
+                }
             }
 
             if (!FolderTools.TryGetDriveIconPath(driveLetter, out _) && defaultIconPath is not null)
@@ -304,7 +291,36 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
                 }
             }
 
+            archive.RefreshDriveLetter();
         }
+    }
+
+    private char TryRemapArchive(ArchiveItem archive)
+    {
+        if (!_directoryExists(archive.Path))
+        {
+            return default;
+        }
+
+        var usedLetters = DriveInfo.GetDrives()
+            .Select(d => char.ToUpperInvariant(d.Name[0]))
+            .Where(c => c is >= 'A' and <= 'Z');
+
+        var letter = DriveLetterHelper.GetUnusedDriveLetters(usedLetters).FirstOrDefault();
+        if (letter == default)
+        {
+            Trace.TraceError($"No available drive letter to remap archive: {archive.Path}");
+            return default;
+        }
+
+        var result = _mapDrive(archive.Path, letter, archive.Name);
+        if (result != 0)
+        {
+            Trace.TraceError($"Failed to remap archive '{archive.Path}' to {letter}: error {result}");
+            return default;
+        }
+
+        return letter;
     }
 
     private void Archives_OnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -312,8 +328,4 @@ public sealed partial class ArchiveListControlViewModel : INotifyPropertyChanged
         _archivesSettingsService.SaveArchives([.. Archives.Select(a => a.Path)]);
     }
 
-    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-    {
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-    }
 }
