@@ -122,6 +122,24 @@ Here are some the vibe code commands I used.
 - When FirstRunCustomizationDialog closes, create the CustomIcons folder and copy icons from AppTools.Icons to the folder.
 - Replace the Save and Skip buttons in FirstRunCustomizationDialog with OK button
 
+# On Startup - 
+
+- Create a method to add a new tab to the property page of any file or folder. Name this tab Tags. Add a list box to this tab to list existing tags. Add buttons to add or remove tags.
+
+
+
+= When FirstRunCustomizationDialog is run, add a new
+
+
+
+# File system watcher
+
+- Create a file system watcher class that runs in the background. This will monitor folders in the list of archives. When a folder is added or renamed, check the new name against the list of icons. If the name matches, update the icon image with the specified icon. If no match, revert icon to default.
+
+
+
+
+
 ---
 
 ## Controls - Breadcrumb, BreadcrumbBar
