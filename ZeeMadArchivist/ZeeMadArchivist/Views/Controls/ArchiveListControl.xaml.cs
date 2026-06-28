@@ -263,9 +263,6 @@ public sealed partial class ArchiveListControl : UserControl
             return;
         }
 
-        if (App.MainWindowInstance is MainWindow mainWindow)
-        {
-            mainWindow.SetStatusText(created ? "New Archive Created" : $"Archive not added: {folderPath}");
-        }
+        App.UpdateMessage(created ? "New Archive Created" : $"Archive not added: {folderPath}");
     }
 }

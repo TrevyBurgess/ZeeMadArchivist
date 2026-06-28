@@ -32,6 +32,14 @@ namespace CyberFeedForward.TheMadArchivist
 
         public static bool DialogShowing { get; set; }
 
+        public static void UpdateMessage(string message)
+        {
+            if (MainWindowInstance is MainWindow mainWindow)
+            {
+                mainWindow.SetStatusText(message);
+            }
+        }
+
         /// <summary>
         /// Invoked when the application is launched.
         /// </summary>

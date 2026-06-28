@@ -2,6 +2,7 @@ using CyberFeedForward.TheMadArchivist.Models;
 using CyberFeedForward.TheMadArchivist.Properties;
 using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.ViewModels;
+using CyberFeedForward.Tools.ZeeFileSystem.Services;
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using System;
 using System.Collections.ObjectModel;
@@ -145,6 +146,9 @@ public sealed partial class ArchiveListControlViewModel : ViewModelBase
             }
 
             var addResult = TryAddFolderPath(fullArchivePath, clearNewArchivePathOnSuccess: false);
+
+            ShellServices.RenameDrive();
+
             return addResult == ArchiveAddResult.Added;
         }
         catch (Exception ex)
