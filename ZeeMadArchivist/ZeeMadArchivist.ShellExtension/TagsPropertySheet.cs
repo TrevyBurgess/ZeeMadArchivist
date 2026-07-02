@@ -274,7 +274,7 @@ public class TagsPropertySheet : IShellExtInit, IShellPropSheetExt
         clsid?.SetValue(null, name);
 
         using var inproc = clsid?.CreateSubKey("InprocServer32");
-        inproc?.SetValue(null, AssemblyLocation);
+        inproc?.SetValue(null, "mscoree.dll");
         inproc?.SetValue("ThreadingModel", "Apartment");
 
         RegisterPropertySheetHandler(guid, name, "*");
@@ -314,8 +314,6 @@ public class TagsPropertySheet : IShellExtInit, IShellPropSheetExt
     {
         Registry.ClassesRoot.DeleteSubKeyTree(@$"{classKey}\shellex\PropertySheetHandlers\{guid}", throwOnMissingSubKey: false);
     }
-
-    private static string AssemblyLocation => typeof(TagsPropertySheet).Assembly.Location;
 
     #endregion
 }

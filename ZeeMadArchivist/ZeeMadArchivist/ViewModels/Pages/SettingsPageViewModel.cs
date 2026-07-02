@@ -1,5 +1,6 @@
 using CyberFeedForward.TheMadArchivist.Services;
 using CyberFeedForward.TheMadArchivist.Utilities;
+using CyberFeedForward.Tools.ZeeFileSystem.Services;
 using Microsoft.UI.Xaml;
 using System;
 
@@ -166,5 +167,14 @@ public sealed partial class SettingsPageViewModel : ViewModelBase
                 mainWindow.SetCommandBarOnLeft(value);
             }
         }
+    }
+
+    /// <summary>
+    /// Checks whether the Tags shell property page is registered in the registry.
+    /// </summary>
+    /// <returns><c>true</c> if the required registry keys are present; otherwise <c>false</c>.</returns>
+    public bool IsTagsPropertyPageRegistered()
+    {
+        return ShellServices.IsTagsPropertyPageRegistered();
     }
 }

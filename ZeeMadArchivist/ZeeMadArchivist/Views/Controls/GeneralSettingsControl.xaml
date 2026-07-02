@@ -39,5 +39,10 @@
             x:Name="ShowFirstRunCustomizationButton"
             Click="ShowFirstRunCustomizationButton_OnClick"
             Content="Show customization dialog on next launch" />
+
+        <Button
+            x:Name="CheckTagsRegistrationButton"
+            Click="CheckTagsRegistrationButton_OnClick"
+            Content="Check Tags property page registration" />
     </StackPanel>
 </UserControl>

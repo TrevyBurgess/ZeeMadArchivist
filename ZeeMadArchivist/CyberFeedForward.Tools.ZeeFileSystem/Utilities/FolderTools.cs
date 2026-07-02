@@ -413,7 +413,7 @@ public static partial class FolderTools
             }
 
             var commaIndex = raw.LastIndexOf(',');
-            iconPath = commaIndex >= 0 ? raw.Substring(0, commaIndex).Trim() : raw.Trim();
+            iconPath = commaIndex >= 0 ? raw[..commaIndex].Trim() : raw.Trim();
             return !string.IsNullOrWhiteSpace(iconPath);
         }
         catch (Exception ex)
@@ -696,7 +696,7 @@ public static partial class FolderTools
                 continue;
             }
 
-            var mappedPath = trimmedLine.Substring(separatorIndex + Separator.Length).Trim();
+            var mappedPath = trimmedLine[(separatorIndex + Separator.Length)..].Trim();
             if (string.IsNullOrWhiteSpace(mappedPath))
             {
                 continue;

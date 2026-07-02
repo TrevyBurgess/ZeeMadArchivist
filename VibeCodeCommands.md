@@ -111,7 +111,7 @@ Here are some the vibe code commands I used.
 
 - Is there a method that is run when the app is first installed?
 - Create a FirstRun service that runs on app startup. When running for the first time, open a dialog for customizing the app.
-- Add a flag to GeneralSettings. When clicked, FirstRun will be set to true. This will show FirstRunCustomizationDialog next time the app is run.
+- Add a flag to GeneralSettings. When clicked, FirstRun will be set to true. This will show FirstRunCustomizationDialog next time the app is run.w
 
 - When FirstRunCustomizationDialog runs, load default settings
 - Add field for selecting initial archive path. Include a folder selector.
@@ -124,11 +124,14 @@ Here are some the vibe code commands I used.
 
 # On Startup - 
 
-- Create a method to add a new tab to the property page of any file or folder. Name this tab Tags. Add a list box to this tab to list existing tags. Add buttons to add or remove tags.
+- Create a method to add a new tab to the property page of any windows file or folder. Name this tab Tags.
+- Add method to remove the custom property page Tags
+- Register Tags tab when FirstRunCustomizationDialog is run
+- Unregister Tags when ShowFirstRunCustomizationButton is clicked
 
 
 
-= When FirstRunCustomizationDialog is run, add a new
+
 
 
 

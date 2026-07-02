@@ -80,7 +80,7 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
         }
     }
 
-    private void FirstRunCustomizationDialog_Closing(ContentDialog sender, ContentDialogClosingEventArgs args)
+    private async void FirstRunCustomizationDialog_Closing(ContentDialog sender, ContentDialogClosingEventArgs args)
     {
         ViewModel.ErrorMessage = null;
 
@@ -91,6 +91,27 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
         }
 
         ApplyUiChanges();
+        await ShowTagsRegistrationResultAsync();
+    }
+
+    private async Task ShowTagsRegistrationResultAsync()
+    {
+        if (!ViewModel.RegisterTagsPropertyPage || string.IsNullOrWhiteSpace(ViewModel.TagsRegistrationErrorMessage))
+        {
+            return;
+        }
+
+        var dialog = new ContentDialog
+        {
+            Title = "Tags Property Page",
+            Content = ViewModel.TagsRegistrationErrorMessage,
+            CloseButtonText = "OK",
+            XamlRoot = XamlRoot,
+        };
+
+        App.DialogShowing = true;
+        await dialog.ShowAsync();
+        App.DialogShowing = false;
     }
 
     private void ApplyUiChanges()
@@ -170,9 +191,11 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
 
     private static async Task<StorageFile?> PickIconFileAsync()
     {
-        var picker = new FileOpenPicker();
-        picker.ViewMode = PickerViewMode.Thumbnail;
-        picker.SuggestedStartLocation = PickerLocationId.ComputerFolder;
+        var picker = new FileOpenPicker
+        {
+            ViewMode = PickerViewMode.Thumbnail,
+            SuggestedStartLocation = PickerLocationId.ComputerFolder
+        };
         picker.FileTypeFilter.Add(".ico");
 
         if (App.MainWindowInstance is null)

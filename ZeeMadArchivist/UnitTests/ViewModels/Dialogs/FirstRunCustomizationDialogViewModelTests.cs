@@ -65,7 +65,8 @@ public sealed class FirstRunCustomizationDialogViewModelTests
         IAppSettingsStore? store = null,
         FirstRunCustomizationDialogViewModel.GetUnusedDriveLettersDelegate? getUnusedDriveLetters = null,
         FirstRunCustomizationDialogViewModel.MapDriveDelegate? mapDrive = null,
-        FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null)
+        FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null,
+        FirstRunCustomizationDialogViewModel.RegisterTagsPropertyPageDelegate? registerTagsPropertyPage = null)
     {
         store ??= new FakeAppSettingsStore();
         return new FirstRunCustomizationDialogViewModel(
@@ -79,13 +80,14 @@ public sealed class FirstRunCustomizationDialogViewModelTests
                 deleteRunValue: () => { }),
             new ArchivesSettingsService(store),
             new CustomIconsSettingsService(store),
-            getUnusedDriveLetters ?? (() => new[] { 'Z', 'Y' }),
+            getUnusedDriveLetters ?? (() => ['Z', 'Y']),
             mapDrive ?? ((path, letter, name) => 0),
             trySetDriveIcon ?? ((char letter, string iconPath, out string error) =>
             {
                 error = null!;
                 return true;
-            }));
+            }),
+            registerTagsPropertyPage ?? (dllPath => true));
     }
 
     [TestMethod]
@@ -105,9 +107,73 @@ public sealed class FirstRunCustomizationDialogViewModelTests
         Assert.AreEqual("Archive", viewModel.ArchiveName);
         Assert.IsFalse(string.IsNullOrWhiteSpace(viewModel.SelectedIconPath));
         Assert.IsNull(viewModel.ErrorMessage);
-        Assert.AreEqual(2, viewModel.AvailableDriveLetters.Count);
+        Assert.HasCount(2, viewModel.AvailableDriveLetters);
         Assert.AreEqual("Z:", viewModel.AvailableDriveLetters[0]);
         Assert.AreEqual("Z:", viewModel.SelectedDriveLetter);
+        Assert.IsTrue(viewModel.RegisterTagsPropertyPage);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(viewModel.TagsPropertyPageDllPath));
+    }
+
+    [TestMethod]
+    public void TrySave_WhenRegisterTagsPropertyPageEnabled_CallsRegisterDelegate()
+    {
+        string? registeredPath = null;
+        var store = new FakeAppSettingsStore();
+        var viewModel = CreateViewModel(
+            store,
+            registerTagsPropertyPage: path =>
+            {
+                registeredPath = path;
+                return true;
+            });
+        viewModel.LoadDefaults();
+        viewModel.RegisterTagsPropertyPage = true;
+        viewModel.TagsPropertyPageDllPath = "C:\\Tags\\ZeeMadArchivist.ShellExtension.dll";
+
+        var result = viewModel.TrySave();
+
+        Assert.IsTrue(result);
+        Assert.AreEqual("C:\\Tags\\ZeeMadArchivist.ShellExtension.dll", registeredPath);
+    }
+
+    [TestMethod]
+    public void TrySave_WhenRegisterTagsPropertyPageDisabled_DoesNotCallRegisterDelegate()
+    {
+        bool wasCalled = false;
+        var store = new FakeAppSettingsStore();
+        var viewModel = CreateViewModel(
+            store,
+            registerTagsPropertyPage: path =>
+            {
+                wasCalled = true;
+                return true;
+            });
+        viewModel.LoadDefaults();
+        viewModel.RegisterTagsPropertyPage = false;
+        viewModel.TagsPropertyPageDllPath = "C:\\Tags\\ZeeMadArchivist.ShellExtension.dll";
+
+        var result = viewModel.TrySave();
+
+        Assert.IsTrue(result);
+        Assert.IsFalse(wasCalled);
+    }
+
+    [TestMethod]
+    public void TrySave_WhenRegisterTagsPropertyPageFails_SetsErrorMessage()
+    {
+        var store = new FakeAppSettingsStore();
+        var viewModel = CreateViewModel(
+            store,
+            registerTagsPropertyPage: path => false);
+        viewModel.LoadDefaults();
+        viewModel.RegisterTagsPropertyPage = true;
+        viewModel.TagsPropertyPageDllPath = "C:\\Tags\\ZeeMadArchivist.ShellExtension.dll";
+
+        var result = viewModel.TrySave();
+
+        Assert.IsTrue(result);
+        Assert.IsFalse(viewModel.TagsRegistrationSucceeded);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(viewModel.TagsRegistrationErrorMessage));
     }
 
     [TestMethod]

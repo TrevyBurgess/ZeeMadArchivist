@@ -206,10 +206,7 @@ public sealed partial class ArchiveListControl : UserControl
             return;
         }
 
-        if (App.MainWindowInstance is MainWindow mainWindow)
-        {
-            mainWindow.SetStatusText("Folder Deleted");
-        }
+        App.UpdateMessage("Folder Deleted");
     }
 
     private async void NewArchiveButton_OnClick(object _, RoutedEventArgs e)

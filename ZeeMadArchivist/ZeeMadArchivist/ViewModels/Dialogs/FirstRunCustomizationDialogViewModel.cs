@@ -1,4 +1,5 @@
 using CyberFeedForward.TheMadArchivist.Services;
+using CyberFeedForward.Tools.ZeeFileSystem.Services;
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using System;
 using System.Collections.Generic;
@@ -18,11 +19,13 @@ public sealed partial class FirstRunCustomizationDialogViewModel(
     CustomIconsSettingsService customIconsSettingsService,
 FirstRunCustomizationDialogViewModel.GetUnusedDriveLettersDelegate? getUnusedDriveLetters = null,
 FirstRunCustomizationDialogViewModel.MapDriveDelegate? mapDrive = null,
-FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null) : ViewModelBase
+FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = null,
+FirstRunCustomizationDialogViewModel.RegisterTagsPropertyPageDelegate? registerTagsPropertyPage = null) : ViewModelBase
 {
     public delegate IEnumerable<char> GetUnusedDriveLettersDelegate();
     public delegate int MapDriveDelegate(string folderPath, char driveLetter, string name);
     public delegate bool TrySetDriveIconDelegate(char driveLetter, string iconPath, out string errorMessage);
+    public delegate bool RegisterTagsPropertyPageDelegate(string dllPath);
 
     private const string SetStartupPreferenceKey = "Settings.SetStartup";
     private const string DefaultAppFolderName = "ZeeMadArchivist";
@@ -38,6 +41,7 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
     private readonly GetUnusedDriveLettersDelegate _getUnusedDriveLetters = getUnusedDriveLetters ?? GetUnusedDriveLetters;
     private readonly MapDriveDelegate _mapDrive = mapDrive ?? FolderTools.MapDrive;
     private readonly TrySetDriveIconDelegate _trySetDriveIcon = trySetDriveIcon ?? FolderTools.TrySetDriveIcon;
+    private readonly RegisterTagsPropertyPageDelegate _registerTagsPropertyPageDelegate = registerTagsPropertyPage ?? ShellServices.RegisterTagsPropertyPage;
 
     private string _title = string.Empty;
     private string _initialArchivePath = string.Empty;
@@ -49,6 +53,10 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
     private bool _setStartup;
     private string? _errorMessage;
     private string? _selectedDriveLetter;
+    private bool _registerTagsPropertyPage = true;
+    private string _tagsPropertyPageDllPath = string.Empty;
+    private bool _tagsRegistrationSucceeded;
+    private string? _tagsRegistrationErrorMessage;
 
     public ObservableCollection<string> AvailableDriveLetters { get; } = [];
 
@@ -132,6 +140,30 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
         set => SetField(ref _selectedDriveLetter, value);
     }
 
+    public bool RegisterTagsPropertyPage
+    {
+        get => _registerTagsPropertyPage;
+        set => SetField(ref _registerTagsPropertyPage, value);
+    }
+
+    public string TagsPropertyPageDllPath
+    {
+        get => _tagsPropertyPageDllPath;
+        set => SetField(ref _tagsPropertyPageDllPath, value);
+    }
+
+    public bool TagsRegistrationSucceeded
+    {
+        get => _tagsRegistrationSucceeded;
+        set => SetField(ref _tagsRegistrationSucceeded, value);
+    }
+
+    public string? TagsRegistrationErrorMessage
+    {
+        get => _tagsRegistrationErrorMessage;
+        set => SetField(ref _tagsRegistrationErrorMessage, value);
+    }
+
     public FirstRunCustomizationDialogViewModel(IAppSettingsStore settingsStore)
         : this(
             settingsStore,
@@ -142,7 +174,8 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
             new CustomIconsSettingsService(settingsStore),
             GetUnusedDriveLetters,
             FolderTools.MapDrive,
-            FolderTools.TrySetDriveIcon)
+            FolderTools.TrySetDriveIcon,
+            ShellServices.RegisterTagsPropertyPage)
     {
     }
 
@@ -156,9 +189,18 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
         InitialCustomIconsPath = GetDefaultCustomIconsPath();
         SelectedIconPath = FolderTools.GetDefaultAppIconPath() ?? string.Empty;
         SetStartup = true;
+        RegisterTagsPropertyPage = true;
+        TagsPropertyPageDllPath = GetDefaultTagsPropertyPageDllPath();
+        TagsRegistrationSucceeded = false;
+        TagsRegistrationErrorMessage = null;
         ErrorMessage = null;
         SelectedDriveLetter = null;
         LoadDriveLetters();
+    }
+
+    public static string GetDefaultTagsPropertyPageDllPath()
+    {
+        return Path.Combine(AppContext.BaseDirectory, "ZeeMadArchivist.ShellExtension.dll");
     }
 
     public void LoadDriveLetters()
@@ -190,7 +232,7 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Trace.TraceError(ex.ToString());
+            Trace.TraceError(ex.ToString());
             ErrorMessage = string.IsNullOrWhiteSpace(ex.Message)
                 ? "The app could not save your preferences. Check permissions and try again."
                 : ex.Message;
@@ -236,7 +278,6 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
                 {
                     throw new InvalidOperationException($"Failed to set mapped drive icon. {driveIconError}");
                 }
-
             }
         }
 
@@ -246,6 +287,19 @@ FirstRunCustomizationDialogViewModel.TrySetDriveIconDelegate? trySetDriveIcon = 
             var normalizedCustomIconsPath = Path.GetFullPath(initialCustomIconsPath);
             _customIconsSettingsService.SetCustomIconsFolderPath(normalizedCustomIconsPath);
             FolderTools.LoadDefaultIcons(normalizedCustomIconsPath);
+        }
+
+        if (RegisterTagsPropertyPage)
+        {
+            var dllPath = TagsPropertyPageDllPath?.Trim() ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(dllPath))
+            {
+                TagsRegistrationSucceeded = _registerTagsPropertyPageDelegate(dllPath);
+                if (!TagsRegistrationSucceeded)
+                {
+                    TagsRegistrationErrorMessage = "The Tags property page could not be registered. Make sure the app is running as administrator and the shell extension DLL is present.";
+                }
+            }
         }
     }
 

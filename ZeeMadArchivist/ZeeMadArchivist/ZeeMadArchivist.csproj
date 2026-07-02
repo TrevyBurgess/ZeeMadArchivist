@@ -132,9 +132,24 @@
     <Folder Include="ViewModels\Pages\" />
     <Folder Include="Views\Pages\" />
   </ItemGroup>
+  <PropertyGroup>
+    <ShellExtensionPlatform>$(Platform)</ShellExtensionPlatform>
+    <ShellExtensionPlatform Condition="'$(Platform)' == '' or '$(Platform)' == 'AnyCPU'">x64</ShellExtensionPlatform>
+    <ShellExtensionPlatform Condition="'$(Platform)' == 'ARM64'">x64</ShellExtensionPlatform>
+  </PropertyGroup>
+
   <ItemGroup>
+    <ProjectReference Include="..\ZeeMadArchivist.ShellExtension\ZeeMadArchivist.ShellExtension.csproj">
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <Private>false</Private>
+      <Properties>Platform=$(ShellExtensionPlatform);Configuration=$(Configuration)</Properties>
+      <SetTargetFramework>TargetFramework=net48</SetTargetFramework>
+    </ProjectReference>
     <ProjectReference Include="..\AppTools\AppTools.csproj" />
     <ProjectReference Include="..\CyberFeedForward.Tools.ZeeFileSystem\CyberFeedForward.Tools.ZeeFileSystem.csproj" />
+    <Content Include="..\ZeeMadArchivist.ShellExtension\bin\$(ShellExtensionPlatform)\$(Configuration)\ZeeMadArchivist.ShellExtension.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\AppTools\Icons\**\*.*" TargetPath="Icons\%(RecursiveDir)%(Filename)%(Extension)">
