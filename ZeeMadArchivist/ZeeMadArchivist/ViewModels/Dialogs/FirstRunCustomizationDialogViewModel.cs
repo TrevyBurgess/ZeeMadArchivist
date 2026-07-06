@@ -258,7 +258,8 @@ FirstRunCustomizationDialogViewModel.RegisterTagsPropertyPageDelegate? registerT
             var existingArchives = _archivesSettingsService.GetArchives();
             _archivesSettingsService.SaveArchives(existingArchives.Concat([fullArchivePath]));
 
-            Directory.CreateDirectory(fullArchivePath);
+            if (!Directory.Exists(fullArchivePath))
+                Directory.CreateDirectory(fullArchivePath);
 
             if (TryParseSelectedDriveLetter(out var driveLetter))
             {
@@ -279,6 +280,8 @@ FirstRunCustomizationDialogViewModel.RegisterTagsPropertyPageDelegate? registerT
                     throw new InvalidOperationException($"Failed to set mapped drive icon. {driveIconError}");
                 }
             }
+
+            PowerShellTools.RenameDrive(fullArchivePath, fullArchivePath);
         }
 
         var initialCustomIconsPath = InitialCustomIconsPath?.Trim() ?? string.Empty;

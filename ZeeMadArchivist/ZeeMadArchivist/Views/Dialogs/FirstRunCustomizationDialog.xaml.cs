@@ -166,7 +166,7 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
     }
 
     private static async Task<StorageFolder?> PickFolderAsync()
-    {
+    { 
         var picker = new FolderPicker();
         picker.FileTypeFilter.Add("*");
 

@@ -13,7 +13,7 @@ public sealed partial class HomePageViewModel : ViewModelBase
 
     public static string Title => "Home";
 
-    public static string Description => "Welcome to Zee Mad Archivist.";
+    public static string Description => "Welcome to Zee Mad Archivist. ";
 
     public string FolderPath
     {
