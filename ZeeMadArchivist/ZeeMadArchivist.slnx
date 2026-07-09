@@ -11,9 +11,9 @@
   </Project>
   <Project Path="CyberFeedForward.Tools.ZeeFileSystem/CyberFeedForward.Tools.ZeeFileSystem.csproj" />
   <Project Path="UnitTests/UnitTests.csproj">
-    <Platform Solution="*|ARM64" Project="ARM64" />
+    <Platform Solution="*|ARM64" Project="x64" />
     <Platform Solution="*|x64" Project="x64" />
-    <Platform Solution="*|x86" Project="x86" />
+    <Platform Solution="*|x86" Project="x64" />
   </Project>
   <Project Path="WinUITests/WinUITests.csproj">
     <Platform Solution="*|ARM64" Project="ARM64" />

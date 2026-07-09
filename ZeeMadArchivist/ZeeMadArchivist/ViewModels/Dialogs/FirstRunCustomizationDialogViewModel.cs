@@ -280,8 +280,6 @@ FirstRunCustomizationDialogViewModel.RegisterTagsPropertyPageDelegate? registerT
                     throw new InvalidOperationException($"Failed to set mapped drive icon. {driveIconError}");
                 }
             }
-
-            PowerShellTools.RenameDrive(fullArchivePath, fullArchivePath);
         }
 
         var initialCustomIconsPath = InitialCustomIconsPath?.Trim() ?? string.Empty;
