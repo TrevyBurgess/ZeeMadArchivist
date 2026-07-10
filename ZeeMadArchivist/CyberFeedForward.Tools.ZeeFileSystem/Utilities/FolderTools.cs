@@ -1,7 +1,6 @@
 using Microsoft.Win32;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -369,14 +368,15 @@ public static partial class FolderTools
         try
         {
             using var iconKey = Registry.CurrentUser.CreateSubKey(
-                $@"Software\Classes\Applications\Explorer.exe\Drives\{normalizedLetter}\DefaultIcon");
+                $@"Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\{normalizedLetter}\DefaultIcon");
             if (iconKey is null)
             {
                 errorMessage = "Unable to open drive icon registry key.";
                 return false;
             }
 
-            iconKey.SetValue(string.Empty, $"{fullIconPath},0", RegistryValueKind.String);
+            iconKey.SetValue(string.Empty, fullIconPath, RegistryValueKind.String);
+            SHChangeNotify(SHCNE_UPDATEITEM, SHCNF_PATHW, $"{normalizedLetter}:\\", null);
             SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, null, null);
             return true;
         }
@@ -400,20 +400,13 @@ public static partial class FolderTools
         try
         {
             using var key = Registry.CurrentUser.OpenSubKey(
-                $@"Software\Classes\Applications\Explorer.exe\Drives\{normalizedLetter}\DefaultIcon");
+                $@"Software\Microsoft\Windows\CurrentVersion\Explorer\DriveIcons\{normalizedLetter}\DefaultIcon");
             if (key is null)
             {
                 return false;
             }
 
-            var raw = key.GetValue(string.Empty) as string;
-            if (string.IsNullOrWhiteSpace(raw))
-            {
-                return false;
-            }
-
-            var commaIndex = raw.LastIndexOf(',');
-            iconPath = commaIndex >= 0 ? raw[..commaIndex].Trim() : raw.Trim();
+            iconPath = key.GetValue(string.Empty) as string;
             return !string.IsNullOrWhiteSpace(iconPath);
         }
         catch (Exception ex)
@@ -461,16 +454,197 @@ public static partial class FolderTools
             var nr = new NetResource
             {
                 dwType = ResourceTypeDisk,
-                lpLocalName = localName,
-                lpRemoteName = folderPath,
-                lpProvider = null,
-                lpComment = name,
+                lpLocalName = Marshal.StringToCoTaskMemUni(localName),
+                lpRemoteName = Marshal.StringToCoTaskMemUni(folderPath),
+                lpProvider = IntPtr.Zero,
+                lpComment = Marshal.StringToCoTaskMemUni(name),
             };
 
-            return WNetAddConnection2(ref nr, null, null, ConnectUpdateProfile);
+            var size = Marshal.SizeOf<NetResource>();
+            var ptr = Marshal.AllocHGlobal(size);
+            Marshal.StructureToPtr(nr, ptr, false);
+
+            try
+            {
+                return WNetAddConnection2(ptr, IntPtr.Zero, IntPtr.Zero, ConnectUpdateProfile);
+            }
+            finally
+            {
+                Marshal.DestroyStructure<NetResource>(ptr);
+                Marshal.FreeHGlobal(ptr);
+                Marshal.FreeCoTaskMem(nr.lpLocalName);
+                Marshal.FreeCoTaskMem(nr.lpRemoteName);
+                Marshal.FreeCoTaskMem(nr.lpComment);
+            }
         }
 
         return MapLocalDrive(normalizedLetter, trimmedPath);
+    }
+
+    /// <summary>
+    /// Renames a drive by setting its volume label and Explorer MountPoints2 label.
+    /// </summary>
+    /// <param name="driveLetter">The drive letter to rename.</param>
+    /// <param name="newName">The new display name for the drive.</param>
+    /// <param name="mappedPath">Optional path the drive is mapped to; used to set the network-share label.</param>
+    /// <returns><c>true</c> if any label was changed; otherwise <c>false</c>.</returns>
+    public static bool RenameDrive(char driveLetter, string newName, string? mappedPath = null)
+    {
+        try
+        {
+            var normalizedLetter = char.ToUpperInvariant(driveLetter);
+            if (normalizedLetter is < 'A' or > 'Z')
+            {
+                Trace.TraceWarning($"RenameDrive: invalid drive letter '{driveLetter}'.");
+                return false;
+            }
+
+            var trimmedName = (newName ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(trimmedName))
+            {
+                Trace.TraceWarning("RenameDrive: new name is empty.");
+                return false;
+            }
+
+            Trace.TraceInformation($"RenameDrive: drive={normalizedLetter}, name={trimmedName}, path={mappedPath ?? "(null)"}");
+
+            var rootPath = normalizedLetter + @":\";
+            var drivePath = normalizedLetter + ":";
+            var isUncPath = !string.IsNullOrWhiteSpace(mappedPath) && IsUncPath(mappedPath);
+            var anySuccess = false;
+
+            // Use the Shell.Application API for network drives; it is the same mechanism
+            // Explorer uses when you right-click a drive and choose Rename. Avoid it for
+            // local/SUBST drives because it can report "The volume is not valid".
+            if (isUncPath && TryRenameViaShellApi(normalizedLetter, trimmedName))
+            {
+                anySuccess = true;
+            }
+
+            // Set the volume label; this works for real local drives.
+            if (SetVolumeLabelNative(rootPath, trimmedName) != 0)
+            {
+                anySuccess = true;
+            }
+            else
+            {
+                var lastError = Marshal.GetLastWin32Error();
+                Trace.TraceError($"SetVolumeLabel failed for {rootPath} with error {lastError}.");
+            }
+
+            var driveLetterSubKey = normalizedLetter.ToString();
+
+            // For network drives, set the label keyed by the UNC path so the share name follows the label.
+            if (isUncPath)
+            {
+                var uncSubKey = "##" + mappedPath!.TrimStart('\\').Replace('\\', '#');
+                if (TrySetMountPointLabel(uncSubKey, trimmedName))
+                {
+                    anySuccess = true;
+                }
+            }
+
+            // The drive-letter key is what Explorer uses for SUBST drives and also takes
+            // precedence for network drives in the local Explorer view.
+            if (TrySetMountPointLabel(driveLetterSubKey, trimmedName))
+            {
+                anySuccess = true;
+            }
+
+            // Clear stale keys that could conflict with the drive-letter label.
+            if (!isUncPath && !string.IsNullOrWhiteSpace(mappedPath))
+            {
+                var fullLocalPath = Path.GetFullPath(mappedPath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                if (!string.IsNullOrEmpty(fullLocalPath) && fullLocalPath.Length >= 3 && fullLocalPath[1] == ':')
+                {
+                    ClearMountPointLabel(fullLocalPath.Replace('\\', '#'));
+                }
+            }
+
+            ClearMountPointLabel(driveLetterSubKey + "#");
+
+            // Refresh Explorer for the drive and force a global association refresh.
+            SHChangeNotify(SHCNE_UPDATEITEM, SHCNF_PATHW, rootPath, null);
+            SHChangeNotify(SHCNE_UPDATEITEM, SHCNF_PATHW, drivePath, null);
+            SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, null, null);
+
+            Trace.TraceInformation($"RenameDrive: completed with anySuccess={anySuccess}.");
+            return anySuccess;
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"RenameDrive: unexpected error: {ex}");
+            return false;
+        }
+    }
+
+    private static bool TryRenameViaShellApi(char driveLetter, string newName)
+    {
+        try
+        {
+            var shellType = Type.GetTypeFromProgID("Shell.Application");
+            if (shellType is null)
+            {
+                Trace.TraceError("Shell.Application is not available.");
+                return false;
+            }
+
+            dynamic shell = Activator.CreateInstance(shellType) ?? throw new InvalidOperationException("Could not create Shell.Application instance.");
+            dynamic folder = shell.NameSpace(driveLetter + ":");
+            if (folder is null)
+            {
+                Trace.TraceError($"Shell.Application could not open drive {driveLetter}:");
+                return false;
+            }
+
+            folder.Self.Name = newName;
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"TryRenameViaShellApi failed for drive {driveLetter}: {ex}");
+            return false;
+        }
+    }
+
+    private static bool TrySetMountPointLabel(string subKeyName, string label)
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.CreateSubKey(
+                @$"Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\{subKeyName}")
+                ?? throw new InvalidOperationException($"Could not create MountPoints2 subkey '{subKeyName}'.");
+
+            key.SetValue("_LabelFromReg", label, RegistryValueKind.String);
+
+            Trace.TraceInformation($"TrySetMountPointLabel: set '{subKeyName}' to '{label}'.");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"TrySetMountPointLabel failed for '{subKeyName}': {ex}");
+            return false;
+        }
+    }
+
+    private static void ClearMountPointLabel(string subKeyName)
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                @$"Software\Microsoft\Windows\CurrentVersion\Explorer\MountPoints2\{subKeyName}", writable: true);
+
+            if (key is not null)
+            {
+                key.DeleteValue("_LabelFromReg", throwOnMissingValue: false);
+                Trace.TraceInformation($"ClearMountPointLabel: cleared '{subKeyName}'.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError($"ClearMountPointLabel failed for '{subKeyName}': {ex}");
+        }
     }
 
     private static bool IsUncPath(string path)
@@ -714,24 +888,27 @@ public static partial class FolderTools
     private const int ConnectUpdateProfile = 0x00000001;
     private const int CancelUpdateProfile = 0x00000001;
 
-    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    [StructLayout(LayoutKind.Sequential)]
     private struct NetResource
     {
         public int dwScope;
         public int dwType;
         public int dwDisplayType;
         public int dwUsage;
-        public string? lpLocalName;
-        public string? lpRemoteName;
-        public string? lpComment;
-        public string? lpProvider;
+        public IntPtr lpLocalName;
+        public IntPtr lpRemoteName;
+        public IntPtr lpComment;
+        public IntPtr lpProvider;
     }
 
-    [DllImport("mpr.dll", CharSet = CharSet.Unicode)]
-    private static extern int WNetAddConnection2(ref NetResource lpNetResource, string? lpPassword, string? lpUsername, int dwFlags);
+    [LibraryImport("mpr.dll")]
+    private static partial int WNetAddConnection2(IntPtr lpNetResource, IntPtr lpPassword, IntPtr lpUsername, int dwFlags);
 
-    [DllImport("mpr.dll", CharSet = CharSet.Unicode, EntryPoint = "WNetCancelConnection2W")]
-    private static extern int WNetCancelConnection2(string lpName, int dwFlags, [MarshalAs(UnmanagedType.Bool)] bool fForce);
+    [LibraryImport("mpr.dll", StringMarshalling = StringMarshalling.Utf16, EntryPoint = "WNetCancelConnection2W")]
+    private static partial int WNetCancelConnection2(string lpName, int dwFlags, [MarshalAs(UnmanagedType.Bool)] bool fForce);
+
+    [LibraryImport("kernel32.dll", StringMarshalling = StringMarshalling.Utf16, SetLastError = true, EntryPoint = "SetVolumeLabelW")]
+    private static partial int SetVolumeLabelNative(string lpRootPathName, string lpVolumeName);
 
     private const uint SHCNE_UPDATEITEM = 0x00002000;
     private const uint SHCNE_ASSOCCHANGED = 0x08000000;

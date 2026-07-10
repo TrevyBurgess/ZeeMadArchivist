@@ -1,7 +1,5 @@
 using CyberFeedForward.TheMadArchivist.Models;
-using CyberFeedForward.TheMadArchivist.Properties;
 using CyberFeedForward.TheMadArchivist.Services;
-using CyberFeedForward.TheMadArchivist.ViewModels;
 using CyberFeedForward.Tools.ZeeFileSystem.Services;
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using System;
@@ -120,16 +118,18 @@ public sealed partial class ArchiveListControlViewModel : ViewModelBase
 
         try
         {
-            var fullArchivePath = Path.GetFullPath(Path.Combine(folderPath, archiveName));
-            Directory.CreateDirectory(fullArchivePath);
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
 
-            var mapResult = _mapDrive(fullArchivePath, driveLetter, archiveName);
+            var mapResult = _mapDrive(folderPath, driveLetter, archiveName);
             if (mapResult != 0)
             {
-                errorMessage = FolderTools.GetMapDriveErrorMessage(mapResult, driveLetter, fullArchivePath);
+                errorMessage = FolderTools.GetMapDriveErrorMessage(mapResult, driveLetter, folderPath);
                 Trace.TraceError($"MapDrive failed with code {mapResult}: {errorMessage}");
                 return false;
             }
+
+            //ShellServices.RenameDrive(driveLetter, arhiveName, folderPath);
 
             var fullIconPath = Path.GetFullPath(iconPath);
             if (!File.Exists(fullIconPath))
@@ -145,9 +145,7 @@ public sealed partial class ArchiveListControlViewModel : ViewModelBase
                 return false;
             }
 
-            var addResult = TryAddFolderPath(fullArchivePath, clearNewArchivePathOnSuccess: false);
-
-            ShellServices.RenameDrive();
+            var addResult = TryAddFolderPath(folderPath, clearNewArchivePathOnSuccess: false);
 
             return addResult == ArchiveAddResult.Added;
         }
@@ -324,6 +322,8 @@ public sealed partial class ArchiveListControlViewModel : ViewModelBase
             return default;
         }
 
+        ShellServices.RenameDrive(letter, archive.Name, archive.Path);
+
         return letter;
     }
 
@@ -331,5 +331,4 @@ public sealed partial class ArchiveListControlViewModel : ViewModelBase
     {
         _archivesSettingsService.SaveArchives([.. Archives.Select(a => a.Path)]);
     }
-
 }

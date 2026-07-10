@@ -2,6 +2,7 @@
 using CyberFeedForward.TheMadArchivist.Utilities;
 using CyberFeedForward.TheMadArchivist.Views.Dialogs;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Threading.Tasks;
 
@@ -93,6 +94,20 @@ namespace CyberFeedForward.TheMadArchivist
                 DialogShowing = true;
 
                 await dialog.ShowAsync();
+
+                if (dialog.ViewModel.RegisterTagsPropertyPage && !string.IsNullOrWhiteSpace(dialog.ViewModel.TagsRegistrationErrorMessage))
+                {
+                    var resultDialog = new ContentDialog
+                    {
+                        Title = "Tags Property Page",
+                        Content = dialog.ViewModel.TagsRegistrationErrorMessage,
+                        CloseButtonText = "OK",
+                        XamlRoot = xamlRoot,
+                    };
+
+                    await resultDialog.ShowAsync();
+                }
+
                 _firstRunService.MarkFirstRunExperienceCompleted();
 
                 (MainWindowInstance as MainWindow)?.ReloadArchives();

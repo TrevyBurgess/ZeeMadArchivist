@@ -80,7 +80,7 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
         }
     }
 
-    private async void FirstRunCustomizationDialog_Closing(ContentDialog sender, ContentDialogClosingEventArgs args)
+    private void FirstRunCustomizationDialog_Closing(ContentDialog sender, ContentDialogClosingEventArgs args)
     {
         ViewModel.ErrorMessage = null;
 
@@ -91,27 +91,6 @@ public sealed partial class FirstRunCustomizationDialog : ContentDialog
         }
 
         ApplyUiChanges();
-        await ShowTagsRegistrationResultAsync();
-    }
-
-    private async Task ShowTagsRegistrationResultAsync()
-    {
-        if (!ViewModel.RegisterTagsPropertyPage || string.IsNullOrWhiteSpace(ViewModel.TagsRegistrationErrorMessage))
-        {
-            return;
-        }
-
-        var dialog = new ContentDialog
-        {
-            Title = "Tags Property Page",
-            Content = ViewModel.TagsRegistrationErrorMessage,
-            CloseButtonText = "OK",
-            XamlRoot = XamlRoot,
-        };
-
-        App.DialogShowing = true;
-        await dialog.ShowAsync();
-        App.DialogShowing = false;
     }
 
     private void ApplyUiChanges()

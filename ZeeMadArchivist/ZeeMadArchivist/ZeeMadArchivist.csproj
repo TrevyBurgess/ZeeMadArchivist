@@ -216,5 +216,6 @@
     <Content Remove="..\AppTools\Icons\Music.ico" />
     <Content Remove="..\AppTools\Icons\Pictures.ico" />
     <Content Remove="..\AppTools\Icons\Tutorials.ico" />
+    <Content Remove="..\ZeeMadArchivist.ShellExtension\bin\x64\Debug\ZeeMadArchivist.ShellExtension.dll" />
   </ItemGroup>
 </Project>

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using CyberFeedForward.TheMadArchivist.ShellExtension;
 using Microsoft.Win32;
 
 #nullable enable
@@ -12,12 +13,15 @@ namespace CyberFeedForward.Tools.ZeeFileSystem.Services
         private const string TagsPropertySheetClsid = "{F4A9C6E2-7B5D-4B2E-9F1C-8D3E2A6B5C4D}";
 
         /// <summary>
-        /// Renames a drive in the file system.
+        /// Renames a mapped drive by setting its volume label.
         /// </summary>
-        /// <returns></returns>
-        public static bool RenameDrive()
+        /// <param name="driveLetter">The drive letter to rename.</param>
+        /// <param name="newName">The new display name for the drive.</param>
+        /// <param name="_">mappedPath Optional path the drive is mapped to; currently ignored.</param>
+        /// <returns><c>true</c> if the volume label was changed; otherwise <c>false</c>.</returns>
+        public static bool RenameDrive(char driveLetter, string newName, string? _ = null)
         {
-            return true;
+            return DriveTools.RenameMappedDrive(driveLetter, newName, out _);
         }
 
         /// <summary>

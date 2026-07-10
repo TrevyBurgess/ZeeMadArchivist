@@ -14,4 +14,8 @@
     <PackageReference Include="System.Drawing.Common" Version="8.0.8" />
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="9.0.0" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\ZeeMadArchivist.ShellExtension\DriveTools.cs" Link="DriveTools.cs" />
+  </ItemGroup>
 </Project>
