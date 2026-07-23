@@ -3,6 +3,7 @@ using CyberFeedForward.TheMadArchivist.ViewModels.Controls;
 using CyberFeedForward.Tools.ZeeFileSystem.Utilities;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace UnitTests.ViewModels.Controls;
@@ -10,7 +11,25 @@ namespace UnitTests.ViewModels.Controls;
 [TestClass]
 public sealed class ArchiveListControlViewModelNewArchiveTests
 {
-    private static readonly string TestIconPath = FolderTools.GetDefaultAppIconPath() ?? "C:\\AppIcon.ico";
+    private static string _testIconPath = string.Empty;
+
+    private static string TestIconPath => _testIconPath;
+
+    [ClassInitialize]
+    public static void ClassInitialize(TestContext context)
+    {
+        _testIconPath = Path.Combine(Path.GetTempPath(), "ZeeMadArchivistTestIcon.ico");
+        File.Create(_testIconPath).Dispose();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanup()
+    {
+        if (!string.IsNullOrEmpty(_testIconPath) && File.Exists(_testIconPath))
+        {
+            File.Delete(_testIconPath);
+        }
+    }
 
     private sealed class FakeAppSettingsStore : IAppSettingsStore
     {

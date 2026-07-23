@@ -51,19 +51,48 @@ public sealed partial class ArchiveListControlViewModel : ViewModelBase
         Archives.CollectionChanged += Archives_OnCollectionChanged;
         ApplyDriveMetadataForExistingArchives();
 
-        //var isFirstRun = FirstRunService.Instance.ShouldRunFirstRunExperience();
-        //if (Archives.Count == 0 && !isFirstRun)
-        //{
-        //    var rootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        //    var documentsPath = Path.Combine(rootPath, Resources.DefaultArchiveName);
+        EnsureDefaultArchiveExists();
+    }
 
-        //    if (!Directory.Exists(documentsPath))
-        //    {
-        //        Directory.CreateDirectory(documentsPath);
-        //    }
+    private void EnsureDefaultArchiveExists()
+    {
+        if (Archives.Count != 0)
+        {
+            return;
+        }
 
-        //    Archives.Add(new ArchiveItem(documentsPath));
-        //}
+        bool isFirstRun;
+        try
+        {
+            isFirstRun = FirstRunService.Instance.ShouldRunFirstRunExperience();
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+            isFirstRun = false;
+        }
+
+        if (isFirstRun)
+        {
+            return;
+        }
+
+        var rootPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+        var documentsPath = Path.Combine(rootPath, Properties.Resources.DefaultArchiveName);
+
+        try
+        {
+            if (!_directoryExists(documentsPath))
+            {
+                Directory.CreateDirectory(documentsPath);
+            }
+
+            Archives.Add(new ArchiveItem(documentsPath));
+        }
+        catch (Exception ex)
+        {
+            Trace.TraceError(ex.ToString());
+        }
     }
 
     public ObservableCollection<ArchiveItem> Archives { get; }
@@ -118,18 +147,20 @@ public sealed partial class ArchiveListControlViewModel : ViewModelBase
 
         try
         {
-            if (!Directory.Exists(folderPath))
-                Directory.CreateDirectory(folderPath);
+            var archivePath = Path.Combine(folderPath, archiveName);
 
-            var mapResult = _mapDrive(folderPath, driveLetter, archiveName);
+            if (!Directory.Exists(archivePath))
+                Directory.CreateDirectory(archivePath);
+
+            var mapResult = _mapDrive(archivePath, driveLetter, archiveName);
             if (mapResult != 0)
             {
-                errorMessage = FolderTools.GetMapDriveErrorMessage(mapResult, driveLetter, folderPath);
+                errorMessage = FolderTools.GetMapDriveErrorMessage(mapResult, driveLetter, archivePath);
                 Trace.TraceError($"MapDrive failed with code {mapResult}: {errorMessage}");
                 return false;
             }
 
-            //ShellServices.RenameDrive(driveLetter, arhiveName, folderPath);
+            //ShellServices.RenameDrive(driveLetter, arhiveName, archivePath);
 
             var fullIconPath = Path.GetFullPath(iconPath);
             if (!File.Exists(fullIconPath))
@@ -145,7 +176,7 @@ public sealed partial class ArchiveListControlViewModel : ViewModelBase
                 return false;
             }
 
-            var addResult = TryAddFolderPath(folderPath, clearNewArchivePathOnSuccess: false);
+            var addResult = TryAddFolderPath(archivePath, clearNewArchivePathOnSuccess: false);
 
             return addResult == ArchiveAddResult.Added;
         }

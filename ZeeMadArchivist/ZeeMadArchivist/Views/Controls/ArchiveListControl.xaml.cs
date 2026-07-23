@@ -15,17 +15,60 @@ namespace CyberFeedForward.TheMadArchivist.Views.Controls;
 
 public sealed partial class ArchiveListControl : UserControl
 {
+    private ArchiveFolderIconWatcher? _archiveFolderIconWatcher;
+
     public ArchiveListControl()
     {
         InitializeComponent();
         ViewModel = new ArchiveListControlViewModel(new ArchivesSettingsService(LocalAppSettingsStore.Instance));
 
         Loaded += ArchiveListControl_OnLoaded;
+        Unloaded += ArchiveListControl_OnUnloaded;
     }
 
     private void ArchiveListControl_OnLoaded(object sender, RoutedEventArgs e)
     {
         UpdateNewArchiveButtonEnabled();
+        StartArchiveFolderIconWatcher();
+    }
+
+    private void ArchiveListControl_OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        _archiveFolderIconWatcher?.Dispose();
+        _archiveFolderIconWatcher = null;
+    }
+
+    private void StartArchiveFolderIconWatcher()
+    {
+        if (ViewModel is null)
+        {
+            return;
+        }
+
+        _archiveFolderIconWatcher?.Dispose();
+        _archiveFolderIconWatcher = new ArchiveFolderIconWatcher(
+            ViewModel.Archives,
+            new CustomIconsSettingsService(LocalAppSettingsStore.Instance),
+            dispatchToUiThread: DispatchToUiThread);
+        _archiveFolderIconWatcher.Start();
+    }
+
+    private void DispatchToUiThread(Action action)
+    {
+        try
+        {
+            if (DispatcherQueue is null || DispatcherQueue.HasThreadAccess)
+            {
+                action();
+                return;
+            }
+
+            _ = DispatcherQueue.TryEnqueue(() => action());
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Trace.TraceError(ex.ToString());
+        }
     }
 
     private void UpdateNewArchiveButtonEnabled()
