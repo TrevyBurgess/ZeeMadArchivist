@@ -129,19 +129,9 @@ Here are some the vibe code commands I used.
 - Register Tags tab when FirstRunCustomizationDialog is run
 - Unregister Tags when ShowFirstRunCustomizationButton is clicked
 
-
-
-
-
-
-
 # File system watcher
 
 - Create a file system watcher class that runs in the background. This will monitor folders in the list of archives. When a folder is added or renamed, check the new name against the list of icons. If the name matches, update the icon image with the specified icon. If no match, revert icon to default.
-
-
-
-
 
 ---
 
